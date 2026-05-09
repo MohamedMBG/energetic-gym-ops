@@ -56,7 +56,7 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
                   : "text-sidebar-foreground hover:bg-sidebar-accent",
               )}
             >
-              <Icon className={cn("h-4.5 w-4.5", active ? "text-white" : "text-primary")} />
+              <Icon className={cn("h-4 w-4", active ? "text-white" : "text-primary")} />
               {it.label}
             </Link>
           );
