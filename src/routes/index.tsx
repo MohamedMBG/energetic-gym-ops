@@ -213,3 +213,37 @@ function Dashboard() {
     </div>
   );
 }
+
+function QuickAction({
+  to,
+  icon: Icon,
+  label,
+  hint,
+  highlight,
+}: {
+  to: string;
+  icon: typeof UserPlus;
+  label: string;
+  hint: string;
+  highlight?: boolean;
+}) {
+  return (
+    <Link
+      to={to}
+      className={`group flex items-center justify-between rounded-2xl border border-border bg-card p-4 shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-glow ${
+        highlight ? "ring-2 ring-primary/40" : ""
+      }`}
+    >
+      <div className="flex items-center gap-3">
+        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-brand text-white">
+          <Icon className="h-5 w-5" />
+        </div>
+        <div>
+          <div className="font-bold">{label}</div>
+          <div className="text-xs text-muted-foreground">{hint}</div>
+        </div>
+      </div>
+      <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary" />
+    </Link>
+  );
+}
