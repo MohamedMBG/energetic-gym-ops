@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo } from "react";
-import { Users, CalendarDays, CalendarRange, DollarSign, AlertTriangle, Clock } from "lucide-react";
+import { Users, CalendarDays, CalendarRange, DollarSign, AlertTriangle, Clock, UserPlus, CreditCard, Send, ArrowRight } from "lucide-react";
 import { StatCard } from "@/components/StatCard";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -73,9 +73,16 @@ function Dashboard() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Dashboard"
-        description="Overview of your gym performance, members, and revenue."
+        title={`Welcome back 👋`}
+        description="Here's what's happening at your gym today."
       />
+
+      {/* Quick actions — 1-click flows */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <QuickAction to="/clients" icon={UserPlus} label="Add new client" hint="Register a member" />
+        <QuickAction to="/payments" icon={CreditCard} label="Record payment" hint="Log a transaction" />
+        <QuickAction to="/reminders" icon={Send} label="Send reminders" hint={`${expiringSoon} due soon`} highlight={expiringSoon > 0} />
+      </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <StatCard label="Active clients" value={active} icon={Users} variant="brand" hint="Currently subscribed" />
@@ -204,5 +211,39 @@ function Dashboard() {
         </div>
       </Card>
     </div>
+  );
+}
+
+function QuickAction({
+  to,
+  icon: Icon,
+  label,
+  hint,
+  highlight,
+}: {
+  to: string;
+  icon: typeof UserPlus;
+  label: string;
+  hint: string;
+  highlight?: boolean;
+}) {
+  return (
+    <Link
+      to={to}
+      className={`group flex items-center justify-between rounded-2xl border border-border bg-card p-4 shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-glow ${
+        highlight ? "ring-2 ring-primary/40" : ""
+      }`}
+    >
+      <div className="flex items-center gap-3">
+        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-brand text-white">
+          <Icon className="h-5 w-5" />
+        </div>
+        <div>
+          <div className="font-bold">{label}</div>
+          <div className="text-xs text-muted-foreground">{hint}</div>
+        </div>
+      </div>
+      <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary" />
+    </Link>
   );
 }

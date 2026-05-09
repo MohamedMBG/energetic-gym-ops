@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Menu, Search, Bell } from "lucide-react";
 import { AppSidebar } from "./AppSidebar";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   return (
     <div className="flex min-h-screen w-full bg-background">
@@ -51,7 +53,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        <main className="flex-1 px-4 py-6 lg:px-8 lg:py-8">{children}</main>
+        <main key={mounted ? "client" : "ssr"} className="flex-1 animate-in fade-in slide-in-from-bottom-2 px-4 py-6 duration-500 lg:px-8 lg:py-8">
+          {mounted ? children : null}
+        </main>
       </div>
     </div>
   );
