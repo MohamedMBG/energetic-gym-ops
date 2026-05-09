@@ -73,9 +73,16 @@ function Dashboard() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Dashboard"
-        description="Overview of your gym performance, members, and revenue."
+        title={`Welcome back 👋`}
+        description="Here's what's happening at your gym today."
       />
+
+      {/* Quick actions — 1-click flows */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <QuickAction to="/clients" icon={UserPlus} label="Add new client" hint="Register a member" />
+        <QuickAction to="/payments" icon={CreditCard} label="Record payment" hint="Log a transaction" />
+        <QuickAction to="/reminders" icon={Send} label="Send reminders" hint={`${expiringSoon} due soon`} highlight={expiringSoon > 0} />
+      </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <StatCard label="Active clients" value={active} icon={Users} variant="brand" hint="Currently subscribed" />
