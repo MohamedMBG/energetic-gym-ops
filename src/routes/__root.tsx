@@ -9,6 +9,8 @@ import {
 } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
+import { AppLayout } from "@/components/AppLayout";
+import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
   return (
@@ -72,11 +74,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "7up Gym — Subscription Management" },
+      { name: "description", content: "Modern gym subscription management dashboard for clients, payments and reminders." },
+      { name: "author", content: "7up Gym" },
+      { property: "og:title", content: "7up Gym — Subscription Management" },
+      { property: "og:description", content: "Manage clients, subscriptions, payments and reminders in one place." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
@@ -113,7 +115,10 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Outlet />
+      <AppLayout>
+        <Outlet />
+      </AppLayout>
+      <Toaster richColors position="top-right" />
     </QueryClientProvider>
   );
 }
