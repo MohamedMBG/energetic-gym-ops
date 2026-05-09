@@ -22,7 +22,7 @@ export interface Client {
 export interface Payment {
   id: string;
   clientId: string;
-  clientName: string;
+  clientName?: string; // not stored in backend — derived from clients list when needed
   amount: number;
   date: string;
   periodStart: string;

@@ -6,15 +6,11 @@ import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  clientStatus, getClients, getReminders, getSettings, saveReminders, uid,
-} from "@/lib/storage";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { clientStatus, getReminders, saveReminders, uid } from "@/lib/storage";
+import { useClients } from "@/hooks/use-clients";
+import { useSettings } from "@/hooks/use-settings";
 import type { Client, ReminderLog } from "@/lib/types";
 
 export const Route = createFileRoute("/reminders")({
@@ -22,16 +18,20 @@ export const Route = createFileRoute("/reminders")({
 });
 
 function RemindersPage() {
-  const settings = useMemo(() => getSettings(), []);
-  const clients = useMemo(() => getClients(), []);
+  const { data: settings } = useSettings();
+  const { data: clients = [] } = useClients();
+  // reminder logs remain in localStorage until the reminders API endpoint is built
   const [history, setHistory] = useState<ReminderLog[]>(() => getReminders());
   const [preview, setPreview] = useState<Client | null>(null);
 
-  const dueSoon = clients.filter((c) => clientStatus(c) === "Expiring soon");
-  const expired = clients.filter((c) => clientStatus(c) === "Expired");
+  const gymName = settings?.gymName ?? "the gym";
+  const reminderDays = settings?.reminderDays ?? 7;
+
+  const dueSoon = useMemo(() => clients.filter((c) => clientStatus(c) === "Expiring soon"), [clients]);
+  const expired = useMemo(() => clients.filter((c) => clientStatus(c) === "Expired"), [clients]);
 
   function emailBody(c: Client) {
-    return `Dear ${c.fullName},\n\nYour ${settings.gymName} subscription is due on ${new Date(c.subscriptionEnd).toLocaleDateString()}. Please renew your payment to keep enjoying full access to the gym.\n\n— ${settings.gymName} Team`;
+    return `Dear ${c.fullName},\n\nYour ${gymName} subscription is due on ${new Date(c.subscriptionEnd).toLocaleDateString()}. Please renew your payment to keep enjoying full access to the gym.\n\n— ${gymName} Team`;
   }
 
   function sendReminder(c: Client) {
@@ -91,12 +91,9 @@ function RemindersPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Email reminders"
-        description="Notify members before their subscription ends."
-      />
+      <PageHeader title="Email reminders" description="Notify members before their subscription ends." />
 
-      <ClientList list={dueSoon} title={`Due in ${settings.reminderDays} days`} emptyMsg="No upcoming renewals" />
+      <ClientList list={dueSoon} title={`Due in ${reminderDays} days`} emptyMsg="No upcoming renewals" />
       <ClientList list={expired} title="Expired subscriptions" emptyMsg="No expired subscriptions" />
 
       <Card className="rounded-2xl border-0 p-5 shadow-soft">
@@ -124,7 +121,9 @@ function RemindersPage() {
                 </TableRow>
               ))}
               {history.length === 0 && (
-                <TableRow><TableCell colSpan={4} className="py-8 text-center text-muted-foreground">No reminders sent yet</TableCell></TableRow>
+                <TableRow>
+                  <TableCell colSpan={4} className="py-8 text-center text-muted-foreground">No reminders sent yet</TableCell>
+                </TableRow>
               )}
             </TableBody>
           </Table>
@@ -133,16 +132,12 @@ function RemindersPage() {
 
       <Dialog open={!!preview} onOpenChange={(o) => !o && setPreview(null)}>
         <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Email preview</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>Email preview</DialogTitle></DialogHeader>
           {preview && (
             <div className="space-y-3 rounded-xl border border-border bg-muted/20 p-4 text-sm">
               <div><span className="font-semibold">To:</span> {preview.email}</div>
-              <div><span className="font-semibold">Subject:</span> {settings.gymName} Subscription Renewal Reminder</div>
-              <div className="border-t border-border pt-3 whitespace-pre-line text-foreground">
-                {emailBody(preview)}
-              </div>
+              <div><span className="font-semibold">Subject:</span> {gymName} Subscription Renewal Reminder</div>
+              <div className="border-t border-border pt-3 whitespace-pre-line text-foreground">{emailBody(preview)}</div>
             </div>
           )}
           <div className="flex justify-end gap-2">

@@ -1,19 +1,24 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Card } from "@/components/ui/card";
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
-import { clientStatus, getClients } from "@/lib/storage";
+import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { clientStatus } from "@/lib/storage";
+import { useClients, useDeleteClient } from "@/hooks/use-clients";
 
 export const Route = createFileRoute("/subscriptions")({
   component: SubscriptionsPage,
 });
 
 function SubscriptionsPage() {
-  const clients = useMemo(() => getClients(), []);
+  const { data: clients = [], isLoading } = useClients();
+  const deleteClient = useDeleteClient();
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const groups = useMemo(() => {
     const out: Record<string, typeof clients> = {
@@ -25,6 +30,14 @@ function SubscriptionsPage() {
     });
     return out;
   }, [clients]);
+
+  function confirmDelete() {
+    if (!deleteId) return;
+    deleteClient.mutate(deleteId, {
+      onSuccess: () => { toast.success("Subscription deleted"); setDeleteId(null); },
+      onError: (err) => toast.error(err.message),
+    });
+  }
 
   return (
     <div className="space-y-6">
@@ -55,9 +68,15 @@ function SubscriptionsPage() {
                 <TableHead>End</TableHead>
                 <TableHead>Days left</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
+              {isLoading && (
+                <TableRow>
+                  <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">Loading…</TableCell>
+                </TableRow>
+              )}
               {clients.map((c) => {
                 const days = Math.ceil((new Date(c.subscriptionEnd).getTime() - Date.now()) / 86400000);
                 return (
@@ -72,6 +91,11 @@ function SubscriptionsPage() {
                       </span>
                     </TableCell>
                     <TableCell><StatusBadge status={clientStatus(c)} /></TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="icon" onClick={() => setDeleteId(c.id)}>
+                        <Trash2 className="h-4 w-4 text-rose-600" />
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 );
               })}
@@ -79,6 +103,27 @@ function SubscriptionsPage() {
           </Table>
         </div>
       </Card>
+
+      <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this subscription?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes the client and their subscription. Their payment records are also deleted. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              disabled={deleteClient.isPending}
+              className="bg-rose-600 text-white hover:bg-rose-700"
+            >
+              {deleteClient.isPending ? "Deleting…" : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

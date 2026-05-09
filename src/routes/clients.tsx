@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Plus, Pencil, Trash2, Search } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -10,48 +10,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
-  clientStatus,
-  computeEndDate,
-  formatCurrency,
-  getClients,
-  getSettings,
-  saveClients,
-  uid,
-} from "@/lib/storage";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { clientStatus, computeEndDate, formatCurrency } from "@/lib/storage";
+import { useClients, useCreateClient, useUpdateClient, useDeleteClient } from "@/hooks/use-clients";
+import { useCreatePayment } from "@/hooks/use-payments";
+import { useSettings } from "@/hooks/use-settings";
 import type { Client } from "@/lib/types";
 
 export const Route = createFileRoute("/clients")({
@@ -68,10 +34,15 @@ const schema = z.object({
   subscriptionStart: z.string().min(1),
   paymentStatus: z.enum(["Paid", "Unpaid", "Late"]),
   amountPaid: z.coerce.number().min(0),
+  paymentMethod: z.enum(["Cash", "Card", "Bank transfer"]).default("Cash"),
   notes: z.string().max(500).optional().default(""),
 });
 
-const empty = (): Omit<Client, "id" | "subscriptionEnd" | "lastPaymentDate"> => ({
+type FormState = Omit<Client, "id" | "subscriptionEnd" | "lastPaymentDate"> & {
+  paymentMethod: "Cash" | "Card" | "Bank transfer";
+};
+
+const empty = (): FormState => ({
   fullName: "",
   phone: "",
   email: "",
@@ -81,20 +52,29 @@ const empty = (): Omit<Client, "id" | "subscriptionEnd" | "lastPaymentDate"> => 
   subscriptionStart: new Date().toISOString().slice(0, 10),
   paymentStatus: "Paid",
   amountPaid: 0,
+  paymentMethod: "Cash",
   notes: "",
 });
 
 function ClientsPage() {
-  const settings = useMemo(() => getSettings(), []);
-  const [clients, setClients] = useState<Client[]>(() => getClients());
+  const { data: settings } = useSettings();
+  const { data: clients = [], isLoading } = useClients();
+  const createClient = useCreateClient();
+  const updateClient = useUpdateClient();
+  const deleteClient = useDeleteClient();
+  const createPayment = useCreatePayment();
+
   const [query, setQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Client | null>(null);
-  const [form, setForm] = useState(empty());
+  const [form, setForm] = useState<FormState>(empty());
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const currency = settings?.currency ?? "MAD";
+  const isPending = createClient.isPending || updateClient.isPending;
 
   const filtered = clients.filter((c) => {
     const q = query.toLowerCase();
@@ -105,14 +85,9 @@ function ClientsPage() {
     return matchesQ && matchesType && matchesStatus;
   });
 
-  function persist(next: Client[]) {
-    setClients(next);
-    saveClients(next);
-  }
-
   function openAdd() {
     setEditing(null);
-    setForm({ ...empty(), amountPaid: settings.monthlyPrice });
+    setForm({ ...empty(), amountPaid: settings?.monthlyPrice ?? 0 });
     setErrors({});
     setDialogOpen(true);
   }
@@ -129,6 +104,7 @@ function ClientsPage() {
       subscriptionStart: c.subscriptionStart,
       paymentStatus: c.paymentStatus,
       amountPaid: c.amountPaid,
+      paymentMethod: "Cash",
       notes: c.notes,
     });
     setErrors({});
@@ -139,47 +115,53 @@ function ClientsPage() {
     const result = schema.safeParse(form);
     if (!result.success) {
       const errs: Record<string, string> = {};
-      result.error.issues.forEach((i) => {
-        errs[i.path.join(".")] = i.message;
-      });
+      result.error.issues.forEach((i) => { errs[i.path.join(".")] = i.message; });
       setErrors(errs);
       return;
     }
     const data = result.data;
     const subscriptionEnd = computeEndDate(data.subscriptionStart, data.subscriptionType);
+    const lastPaymentDate = data.paymentStatus === "Paid" ? data.subscriptionStart : null;
+
     if (editing) {
-      const next = clients.map((c) =>
-        c.id === editing.id
-          ? {
-              ...c,
-              ...data,
-              subscriptionEnd,
-              lastPaymentDate: data.paymentStatus === "Paid" ? data.subscriptionStart : c.lastPaymentDate,
-              notes: data.notes ?? "",
-            }
-          : c,
+      updateClient.mutate(
+        { id: editing.id, data: { ...data, notes: data.notes ?? "", subscriptionEnd, lastPaymentDate } },
+        {
+          onSuccess: () => { toast.success("Client updated"); setDialogOpen(false); },
+          onError: (err) => toast.error(err.message),
+        },
       );
-      persist(next);
-      toast.success("Client updated");
     } else {
-      const newClient: Client = {
-        id: uid(),
-        ...data,
-        notes: data.notes ?? "",
-        subscriptionEnd,
-        lastPaymentDate: data.paymentStatus === "Paid" ? data.subscriptionStart : null,
-      };
-      persist([newClient, ...clients]);
-      toast.success("Client added");
+      createClient.mutate(
+        { ...data, notes: data.notes ?? "", subscriptionEnd, lastPaymentDate },
+        {
+          onSuccess: (createdClient) => {
+            if (data.paymentStatus === "Paid") {
+              createPayment.mutate({
+                clientId: createdClient.id,
+                amount: data.amountPaid,
+                date: data.subscriptionStart,
+                periodStart: data.subscriptionStart,
+                periodEnd: subscriptionEnd,
+                method: data.paymentMethod,
+                status: "Paid",
+              });
+            }
+            toast.success("Client added");
+            setDialogOpen(false);
+          },
+          onError: (err) => toast.error(err.message),
+        },
+      );
     }
-    setDialogOpen(false);
   }
 
   function confirmDelete() {
     if (!deleteId) return;
-    persist(clients.filter((c) => c.id !== deleteId));
-    toast.success("Client removed");
-    setDeleteId(null);
+    deleteClient.mutate(deleteId, {
+      onSuccess: () => { toast.success("Client removed"); setDeleteId(null); },
+      onError: (err) => toast.error(err.message),
+    });
   }
 
   return (
@@ -198,17 +180,10 @@ function ClientsPage() {
         <div className="flex flex-col gap-3 md:flex-row md:items-center">
           <div className="relative flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search by name, email or phone…"
-              className="h-10 rounded-xl pl-9"
-            />
+            <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search by name, email or phone…" className="h-10 rounded-xl pl-9" />
           </div>
           <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="h-10 w-full rounded-xl md:w-44">
-              <SelectValue placeholder="Type" />
-            </SelectTrigger>
+            <SelectTrigger className="h-10 w-full rounded-xl md:w-44"><SelectValue placeholder="Type" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All types</SelectItem>
               <SelectItem value="Monthly">Monthly</SelectItem>
@@ -216,9 +191,7 @@ function ClientsPage() {
             </SelectContent>
           </Select>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="h-10 w-full rounded-xl md:w-44">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
+            <SelectTrigger className="h-10 w-full rounded-xl md:w-44"><SelectValue placeholder="Status" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All statuses</SelectItem>
               <SelectItem value="Active">Active</SelectItem>
@@ -243,6 +216,11 @@ function ClientsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
+              {isLoading && (
+                <TableRow>
+                  <TableCell colSpan={7} className="py-10 text-center text-muted-foreground">Loading…</TableCell>
+                </TableRow>
+              )}
               {filtered.map((c) => {
                 const status = clientStatus(c);
                 return (
@@ -262,37 +240,27 @@ function ClientsPage() {
                       <div className="text-sm">{c.email}</div>
                       <div className="text-xs text-muted-foreground">{c.phone}</div>
                     </TableCell>
-                    <TableCell>
-                      <StatusBadge status={c.subscriptionType} />
-                    </TableCell>
+                    <TableCell><StatusBadge status={c.subscriptionType} /></TableCell>
                     <TableCell>{new Date(c.subscriptionEnd).toLocaleDateString()}</TableCell>
-                    <TableCell>
-                      <StatusBadge status={status} />
-                    </TableCell>
+                    <TableCell><StatusBadge status={status} /></TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <StatusBadge status={c.paymentStatus} />
-                        <span className="text-xs text-muted-foreground">{formatCurrency(c.amountPaid, settings.currency)}</span>
+                        <span className="text-xs text-muted-foreground">{formatCurrency(c.amountPaid, currency)}</span>
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => openEdit(c)}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => setDeleteId(c.id)}>
-                          <Trash2 className="h-4 w-4 text-rose-600" />
-                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => openEdit(c)}><Pencil className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => setDeleteId(c.id)}><Trash2 className="h-4 w-4 text-rose-600" /></Button>
                       </div>
                     </TableCell>
                   </TableRow>
                 );
               })}
-              {filtered.length === 0 && (
+              {!isLoading && filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="py-10 text-center text-muted-foreground">
-                    No clients found
-                  </TableCell>
+                  <TableCell colSpan={7} className="py-10 text-center text-muted-foreground">No clients found</TableCell>
                 </TableRow>
               )}
             </TableBody>
@@ -334,13 +302,7 @@ function ClientsPage() {
             <Field label="Subscription type">
               <Select
                 value={form.subscriptionType}
-                onValueChange={(v) =>
-                  setForm({
-                    ...form,
-                    subscriptionType: v as "Monthly" | "Annual",
-                    amountPaid: v === "Monthly" ? settings.monthlyPrice : settings.annualPrice,
-                  })
-                }
+                onValueChange={(v) => setForm({ ...form, subscriptionType: v as "Monthly" | "Annual", amountPaid: v === "Monthly" ? (settings?.monthlyPrice ?? 0) : (settings?.annualPrice ?? 0) })}
               >
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -365,9 +327,21 @@ function ClientsPage() {
                 </SelectContent>
               </Select>
             </Field>
-            <Field label={`Amount paid (${settings.currency})`} error={errors.amountPaid}>
+            <Field label={`Amount paid (${currency})`} error={errors.amountPaid}>
               <Input type="number" min={0} value={form.amountPaid} onChange={(e) => setForm({ ...form, amountPaid: Number(e.target.value) })} />
             </Field>
+            {!editing && form.paymentStatus === "Paid" && (
+              <Field label="Payment method">
+                <Select value={form.paymentMethod} onValueChange={(v) => setForm({ ...form, paymentMethod: v as FormState["paymentMethod"] })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Cash">Cash</SelectItem>
+                    <SelectItem value="Card">Card</SelectItem>
+                    <SelectItem value="Bank transfer">Bank transfer</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+            )}
             <div className="sm:col-span-2">
               <Field label="Notes">
                 <Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
@@ -377,8 +351,8 @@ function ClientsPage() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-            <Button onClick={submit} className="bg-gradient-brand-strong text-white">
-              {editing ? "Save changes" : "Add client"}
+            <Button onClick={submit} disabled={isPending} className="bg-gradient-brand-strong text-white">
+              {isPending ? "Saving…" : editing ? "Save changes" : "Add client"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -394,8 +368,8 @@ function ClientsPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-rose-600 text-white hover:bg-rose-700">
-              Delete
+            <AlertDialogAction onClick={confirmDelete} disabled={deleteClient.isPending} className="bg-rose-600 text-white hover:bg-rose-700">
+              {deleteClient.isPending ? "Deleting…" : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

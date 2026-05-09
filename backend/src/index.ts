@@ -1,0 +1,66 @@
+import 'express-async-errors';
+import * as dotenv from 'dotenv';
+dotenv.config();
+
+import express, { Request, Response, NextFunction } from 'express';
+import cookieParser from 'cookie-parser';
+import cors from 'cors';
+import morgan from 'morgan';
+import { AppError } from './lib/errors';
+import authRoutes from './routes/auth';
+import clientRoutes from './routes/clients';
+import paymentRoutes from './routes/payments';
+import settingsRoutes from './routes/settings';
+
+const app = express();
+const PORT = process.env.PORT || 3001;
+
+// Allows both explicit FRONTEND_URL and localhost:3000 (common dev port)
+const allowedOrigins = [
+  process.env.FRONTEND_URL || 'http://localhost:5173',
+  'http://localhost:3000',
+];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // allow requests with no origin (curl, Postman, mobile apps)
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`CORS: origin ${origin} not allowed`));
+      }
+    },
+    credentials: true,
+  }),
+);
+app.use(express.json());
+app.use(cookieParser());
+
+if (process.env.NODE_ENV !== 'production') {
+  app.use(morgan('dev'));
+}
+
+app.use('/api/auth', authRoutes);
+app.use('/api/clients', clientRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/settings', settingsRoutes);
+
+app.get('/health', (_req, res) => {
+  res.json({ data: { ok: true } });
+});
+
+// Global error handler — handles AppError (typed HTTP errors) and unexpected crashes.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+  if (err instanceof AppError) {
+    res.status(err.status).json({ error: { message: err.message } });
+    return;
+  }
+  console.error(err);
+  res.status(500).json({ error: { message: 'Internal server error' } });
+});
+
+app.listen(PORT, () => {
+  console.log(`Backend running on http://localhost:${PORT}`);
+});

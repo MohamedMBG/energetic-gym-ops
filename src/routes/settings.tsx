@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { PageHeader } from "@/components/PageHeader";
@@ -7,7 +7,9 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { getSettings, resetAllData, saveSettings } from "@/lib/storage";
+import { useSettings, useUpdateSettings } from "@/hooks/use-settings";
+import { api } from "@/lib/api";
+import type { Settings } from "@/lib/types";
 
 export const Route = createFileRoute("/settings")({
   component: SettingsPage,
@@ -21,9 +23,24 @@ const schema = z.object({
   currency: z.string().trim().min(2).max(8),
 });
 
+const EMPTY_SETTINGS: Settings = {
+  gymName: "",
+  monthlyPrice: 0,
+  annualPrice: 0,
+  reminderDays: 7,
+  currency: "USD",
+};
+
 function SettingsPage() {
-  const [form, setForm] = useState(() => getSettings());
+  const { data: settings } = useSettings();
+  const updateSettings = useUpdateSettings();
+  const [form, setForm] = useState<Settings>(EMPTY_SETTINGS);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // sync form when settings loads
+  useEffect(() => {
+    if (settings) setForm(settings);
+  }, [settings]);
 
   function save() {
     const r = schema.safeParse(form);
@@ -33,9 +50,10 @@ function SettingsPage() {
       setErrors(errs);
       return;
     }
-    saveSettings(r.data);
-    setErrors({});
-    toast.success("Settings saved");
+    updateSettings.mutate(r.data, {
+      onSuccess: () => { toast.success("Settings saved"); setErrors({}); },
+      onError: (err) => toast.error(err.message),
+    });
   }
 
   return (
@@ -61,25 +79,26 @@ function SettingsPage() {
           </Field>
         </div>
         <div className="mt-6 flex justify-end">
-          <Button onClick={save} className="bg-gradient-brand-strong text-white">Save changes</Button>
+          <Button onClick={save} disabled={updateSettings.isPending} className="bg-gradient-brand-strong text-white">
+            {updateSettings.isPending ? "Saving…" : "Save changes"}
+          </Button>
         </div>
       </Card>
 
       <Card className="rounded-2xl border-0 p-6 shadow-soft">
         <h2 className="text-lg font-bold">Danger zone</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Reset all clients, payments, reminders and settings. This cannot be undone.
+          Sign out of your account.
         </p>
         <Button
           variant="outline"
           className="mt-4 border-rose-300 text-rose-600 hover:bg-rose-50"
-          onClick={() => {
-            resetAllData();
-            toast.success("All data reset. Reload to see fresh seed data.");
-            setTimeout(() => window.location.reload(), 800);
+          onClick={async () => {
+            await api.post("/api/auth/logout", {});
+            window.location.href = "/login";
           }}
         >
-          Reset all data
+          Sign out
         </Button>
       </Card>
     </div>

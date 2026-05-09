@@ -1,23 +1,55 @@
 import { useEffect, useState } from "react";
-import { Menu, Search, Bell } from "lucide-react";
+import { Menu, Bell } from "lucide-react";
+import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { AppSidebar } from "./AppSidebar";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
-import { Input } from "@/components/ui/input";
+import { useAuth } from "@/lib/auth";
+
+const PUBLIC_PATHS = ["/login", "/setup"];
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
-  const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+
   useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
+
+  if (PUBLIC_PATHS.includes(pathname)) {
+    return <>{children}</>;
+  }
+
+  return <AuthenticatedLayout>{children}</AuthenticatedLayout>;
+}
+
+function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
+  const { data: auth, isLoading, isError } = useAuth();
+
+  useEffect(() => {
+    if (isError) navigate({ to: "/login" });
+  }, [isError, navigate]);
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="text-sm text-muted-foreground">Loading…</div>
+      </div>
+    );
+  }
+
+  if (isError || !auth) return null;
+
+  const displayName = auth.user.email.split("@")[0];
+  const initials = displayName.slice(0, 2).toUpperCase();
 
   return (
     <div className="flex min-h-screen w-full bg-background">
-      {/* Desktop sidebar */}
       <div className="hidden lg:block">
         <AppSidebar />
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        {/* Top bar */}
         <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border bg-card/80 px-4 backdrop-blur lg:px-8">
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger className="rounded-lg p-2 text-muted-foreground hover:bg-accent lg:hidden">
@@ -29,13 +61,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             </SheetContent>
           </Sheet>
 
-          <div className="relative flex-1 max-w-md">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search clients, payments…"
-              className="h-10 rounded-xl border-border bg-muted/40 pl-9"
-            />
-          </div>
+          <div className="flex-1" />
 
           <button className="relative rounded-xl p-2.5 text-muted-foreground hover:bg-accent">
             <Bell className="h-5 w-5" />
@@ -44,17 +70,17 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
           <div className="hidden items-center gap-3 sm:flex">
             <div className="text-right">
-              <div className="text-sm font-semibold">Coach Marco</div>
-              <div className="text-xs text-muted-foreground">Owner</div>
+              <div className="text-sm font-semibold">{auth.gym.name}</div>
+              <div className="text-xs text-muted-foreground">{auth.user.email}</div>
             </div>
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-brand text-sm font-bold text-white">
-              CM
+              {initials}
             </div>
           </div>
         </header>
 
-        <main key={mounted ? "client" : "ssr"} className="flex-1 animate-in fade-in slide-in-from-bottom-2 px-4 py-6 duration-500 lg:px-8 lg:py-8">
-          {mounted ? children : null}
+        <main className="flex-1 animate-in fade-in slide-in-from-bottom-2 px-4 py-6 duration-500 lg:px-8 lg:py-8">
+          {children}
         </main>
       </div>
     </div>

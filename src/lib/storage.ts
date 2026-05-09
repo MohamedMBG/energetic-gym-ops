@@ -13,7 +13,7 @@ export const DEFAULT_SETTINGS: Settings = {
   monthlyPrice: 45,
   annualPrice: 480,
   reminderDays: 7,
-  currency: "USD",
+  currency: "MAD",
 };
 
 const isBrowser = () => typeof window !== "undefined";
@@ -176,10 +176,11 @@ export function clientStatus(c: Client): "Active" | "Expiring soon" | "Expired" 
   return "Active";
 }
 
-export function formatCurrency(n: number, currency = "USD") {
+export function formatCurrency(n: number, currency = "MAD") {
   try {
-    return new Intl.NumberFormat("en-US", { style: "currency", currency, maximumFractionDigits: 0 }).format(n);
+    const num = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(n);
+    return `${num} ${currency}`;
   } catch {
-    return `$${n.toFixed(0)}`;
+    return `${Math.round(n)} ${currency}`;
   }
 }

@@ -8,7 +8,9 @@ import {
   BarChart3,
   Settings as SettingsIcon,
   Dumbbell,
+  LogOut,
 } from "lucide-react";
+import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 const items = [
@@ -68,6 +70,19 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
         <p className="mt-1 text-sm leading-snug">
           Send reminders 7 days before renewal to boost retention.
         </p>
+      </div>
+
+      <div className="px-3 pb-4">
+        <button
+          onClick={async () => {
+            await api.post("/api/auth/logout", {});
+            window.location.href = "/login";
+          }}
+          className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-sidebar-foreground transition-all hover:bg-rose-50 hover:text-rose-600"
+        >
+          <LogOut className="h-4 w-4 text-muted-foreground group-hover:text-rose-600" />
+          Sign out
+        </button>
       </div>
     </aside>
   );

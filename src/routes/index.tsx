@@ -6,32 +6,25 @@ import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Card } from "@/components/ui/card";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
+  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid,
 } from "recharts";
-import { clientStatus, formatCurrency, getClients, getPayments, getSettings } from "@/lib/storage";
+import { clientStatus, formatCurrency } from "@/lib/storage";
+import { useClients } from "@/hooks/use-clients";
+import { usePayments } from "@/hooks/use-payments";
+import { useSettings } from "@/hooks/use-settings";
 
 export const Route = createFileRoute("/")({
   component: Dashboard,
 });
 
 function Dashboard() {
-  const clients = useMemo(() => getClients(), []);
-  const payments = useMemo(() => getPayments(), []);
-  const settings = useMemo(() => getSettings(), []);
+  const { data: clients = [] } = useClients();
+  const { data: payments = [] } = usePayments();
+  const { data: settings } = useSettings();
+  const currency = settings?.currency ?? "MAD";
 
   const now = new Date();
   const thisMonth = now.getMonth();
@@ -49,7 +42,6 @@ function Dashboard() {
   const unpaid = clients.filter((c) => c.paymentStatus !== "Paid").length;
   const expiringSoon = clients.filter((c) => clientStatus(c) === "Expiring soon").length;
 
-  // Last 6 months earnings
   const monthsData = useMemo(() => {
     const out: { month: string; earnings: number }[] = [];
     for (let i = 5; i >= 0; i--) {
@@ -73,11 +65,10 @@ function Dashboard() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title={`Welcome back 👋`}
+        title="Welcome back 👋"
         description="Here's what's happening at your gym today."
       />
 
-      {/* Quick actions — 1-click flows */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <QuickAction to="/clients" icon={UserPlus} label="Add new client" hint="Register a member" />
         <QuickAction to="/payments" icon={CreditCard} label="Record payment" hint="Log a transaction" />
@@ -90,7 +81,7 @@ function Dashboard() {
         <StatCard label="Annual subs" value={annual} icon={CalendarRange} hint="Active annual plans" />
         <StatCard
           label="Earnings this month"
-          value={formatCurrency(earningsThisMonth, settings.currency)}
+          value={formatCurrency(earningsThisMonth, currency)}
           icon={DollarSign}
           variant="brand"
           hint={now.toLocaleString("en", { month: "long", year: "numeric" })}
@@ -120,20 +111,10 @@ function Dashboard() {
                 <XAxis dataKey="month" stroke="oklch(0.5 0.03 60)" fontSize={12} />
                 <YAxis stroke="oklch(0.5 0.03 60)" fontSize={12} />
                 <Tooltip
-                  contentStyle={{
-                    borderRadius: 12,
-                    border: "1px solid oklch(0.93 0.01 80)",
-                    boxShadow: "0 8px 24px -12px rgba(0,0,0,0.15)",
-                  }}
-                  formatter={(v: number) => formatCurrency(v, settings.currency)}
+                  contentStyle={{ borderRadius: 12, border: "1px solid oklch(0.93 0.01 80)", boxShadow: "0 8px 24px -12px rgba(0,0,0,0.15)" }}
+                  formatter={(v: number) => formatCurrency(v, currency)}
                 />
-                <Area
-                  type="monotone"
-                  dataKey="earnings"
-                  stroke="oklch(0.7 0.2 45)"
-                  strokeWidth={3}
-                  fill="url(#fillGrad)"
-                />
+                <Area type="monotone" dataKey="earnings" stroke="oklch(0.7 0.2 45)" strokeWidth={3} fill="url(#fillGrad)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -142,15 +123,14 @@ function Dashboard() {
         <Card className="rounded-2xl border-0 bg-gradient-brand-strong p-6 text-white shadow-glow">
           <h3 className="text-sm font-semibold uppercase tracking-wider opacity-80">Total revenue</h3>
           <div className="mt-2 text-4xl font-extrabold">
-            {formatCurrency(payments.filter((p) => p.status === "Paid").reduce((s, p) => s + p.amount, 0), settings.currency)}
+            {formatCurrency(payments.filter((p) => p.status === "Paid").reduce((s, p) => s + p.amount, 0), currency)}
           </div>
           <p className="mt-1 text-sm opacity-80">All-time earnings collected</p>
-
           <div className="mt-6 space-y-3">
             <div className="flex items-center justify-between rounded-xl bg-white/10 px-3 py-2.5">
               <span className="text-sm">Avg. monthly revenue</span>
               <span className="font-bold">
-                {formatCurrency(monthsData.reduce((s, m) => s + m.earnings, 0) / Math.max(monthsData.length, 1), settings.currency)}
+                {formatCurrency(monthsData.reduce((s, m) => s + m.earnings, 0) / Math.max(monthsData.length, 1), currency)}
               </span>
             </div>
             <div className="flex items-center justify-between rounded-xl bg-white/10 px-3 py-2.5">
@@ -168,11 +148,9 @@ function Dashboard() {
       </div>
 
       <Card className="rounded-2xl border-0 p-5 shadow-soft">
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-bold">Recent payments</h2>
-            <p className="text-xs text-muted-foreground">Latest transactions across your gym</p>
-          </div>
+        <div className="mb-4">
+          <h2 className="text-lg font-bold">Recent payments</h2>
+          <p className="text-xs text-muted-foreground">Latest transactions across your gym</p>
         </div>
         <div className="overflow-x-auto">
           <Table>
@@ -186,24 +164,23 @@ function Dashboard() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {recent.map((p) => (
-                <TableRow key={p.id}>
-                  <TableCell className="font-medium">{p.clientName}</TableCell>
-                  <TableCell>{new Date(p.date).toLocaleDateString()}</TableCell>
-                  <TableCell>{p.method}</TableCell>
-                  <TableCell>
-                    <StatusBadge status={p.status} />
-                  </TableCell>
-                  <TableCell className="text-right font-bold">
-                    {formatCurrency(p.amount, settings.currency)}
-                  </TableCell>
-                </TableRow>
-              ))}
+              {recent.map((p) => {
+                const client = clients.find((c) => c.id === p.clientId);
+                return (
+                  <TableRow key={p.id}>
+                    <TableCell className="font-medium">{client?.fullName ?? p.clientName ?? "—"}</TableCell>
+                    <TableCell>{new Date(p.date).toLocaleDateString()}</TableCell>
+                    <TableCell>{p.method}</TableCell>
+                    <TableCell><StatusBadge status={p.status} /></TableCell>
+                    <TableCell className="text-right font-bold">
+                      {formatCurrency(p.amount, currency)}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
               {recent.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
-                    No payments yet
-                  </TableCell>
+                  <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">No payments yet</TableCell>
                 </TableRow>
               )}
             </TableBody>
@@ -214,25 +191,11 @@ function Dashboard() {
   );
 }
 
-function QuickAction({
-  to,
-  icon: Icon,
-  label,
-  hint,
-  highlight,
-}: {
-  to: string;
-  icon: typeof UserPlus;
-  label: string;
-  hint: string;
-  highlight?: boolean;
-}) {
+function QuickAction({ to, icon: Icon, label, hint, highlight }: { to: string; icon: typeof UserPlus; label: string; hint: string; highlight?: boolean }) {
   return (
     <Link
       to={to}
-      className={`group flex items-center justify-between rounded-2xl border border-border bg-card p-4 shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-glow ${
-        highlight ? "ring-2 ring-primary/40" : ""
-      }`}
+      className={`group flex items-center justify-between rounded-2xl border border-border bg-card p-4 shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-glow ${highlight ? "ring-2 ring-primary/40" : ""}`}
     >
       <div className="flex items-center gap-3">
         <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-brand text-white">
