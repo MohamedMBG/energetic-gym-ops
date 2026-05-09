@@ -53,7 +53,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        <main className="flex-1 px-4 py-6 lg:px-8 lg:py-8">{children}</main>
+        <main key={mounted ? "client" : "ssr"} className="flex-1 px-4 py-6 animate-fade-in lg:px-8 lg:py-8">
+          {mounted ? children : null}
+        </main>
       </div>
     </div>
   );
