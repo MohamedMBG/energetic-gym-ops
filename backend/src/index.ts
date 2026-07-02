@@ -19,17 +19,22 @@ import { ensureAdminAccount } from './lib/admin-bootstrap';
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Allows both explicit FRONTEND_URL and localhost:3000 (common dev port)
-const allowedOrigins = [
-  process.env.FRONTEND_URL || 'http://localhost:5173',
-  'http://localhost:3000',
-];
+function parseAllowedOrigins() {
+  const configured = (process.env.FRONTEND_URL || 'http://localhost:5173')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+  return new Set([...configured, 'http://localhost:3000', 'http://localhost:5173']);
+}
+
+const allowedOrigins = parseAllowedOrigins();
 
 app.use(
   cors({
     origin: (origin, callback) => {
       // allow requests with no origin (curl, Postman, mobile apps)
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (!origin || allowedOrigins.has(origin)) {
         callback(null, true);
       } else {
         callback(new Error(`CORS: origin ${origin} not allowed`));

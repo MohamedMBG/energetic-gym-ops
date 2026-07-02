@@ -1,4 +1,5 @@
-const BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:3001';
+const configuredBase = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '');
+const BASE = configuredBase ?? 'http://localhost:3001';
 
 export class ApiError extends Error {
   constructor(
@@ -11,12 +12,21 @@ export class ApiError extends Error {
 }
 
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, {
-    method,
-    credentials: 'include',
-    headers: body !== undefined ? { 'Content-Type': 'application/json' } : {},
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
+  let res: Response;
+
+  try {
+    res = await fetch(`${BASE}${path}`, {
+      method,
+      credentials: 'include',
+      headers: body !== undefined ? { 'Content-Type': 'application/json' } : {},
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+  } catch {
+    throw new ApiError(
+      0,
+      `Cannot reach the backend API at ${BASE}. Check VITE_API_URL, backend status, and CORS FRONTEND_URL.`,
+    );
+  }
 
   // 204 No Content — return undefined
   if (res.status === 204) return undefined as T;
