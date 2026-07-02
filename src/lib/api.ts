@@ -1,5 +1,29 @@
 const configuredBase = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '');
-const BASE = configuredBase ?? 'http://localhost:3001';
+
+function resolveBaseUrl(): string {
+  const fallback = 'http://localhost:3001';
+  const base = configuredBase ?? fallback;
+
+  if (typeof window === 'undefined') return base;
+
+  const pageHost = window.location.hostname;
+  const localHosts = new Set(['localhost', '127.0.0.1', '::1']);
+  if (localHosts.has(pageHost)) return base;
+
+  try {
+    const url = new URL(base);
+    if (localHosts.has(url.hostname)) {
+      url.hostname = pageHost;
+      return url.toString().replace(/\/$/, '');
+    }
+  } catch {
+    return base;
+  }
+
+  return base;
+}
+
+const BASE = resolveBaseUrl();
 
 export class ApiError extends Error {
   constructor(

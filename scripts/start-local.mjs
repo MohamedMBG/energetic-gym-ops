@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import net from 'node:net';
+import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { setupLocal } from './setup-local.mjs';
 
@@ -86,14 +87,28 @@ async function findFrontendPort() {
   throw new Error('No free frontend port found in the 5173-5190 range.');
 }
 
+function getLanAddress() {
+  for (const addresses of Object.values(os.networkInterfaces())) {
+    for (const address of addresses ?? []) {
+      if (address.family === 'IPv4' && !address.internal) return address.address;
+    }
+  }
+
+  return null;
+}
+
 async function main() {
   const backendEnv = await setupLocal();
   const frontendPort = await findFrontendPort();
   const frontendUrl = `http://localhost:${frontendPort}`;
+  const lanAddress = getLanAddress();
+  const lanFrontendUrl = lanAddress ? `http://${lanAddress}:${frontendPort}` : null;
   const frontendNpm = npmInvocation([
     'run',
     'dev',
     '--',
+    '--host',
+    '0.0.0.0',
     '--port',
     String(frontendPort),
     '--strictPort',
@@ -118,6 +133,7 @@ async function main() {
   process.on('SIGTERM', shutdown);
 
   log(`Starting frontend on ${frontendUrl}`);
+  if (lanFrontendUrl) log(`Phone URL on the same Wi-Fi: ${lanFrontendUrl}`);
 
   backendProcess = startProcess(backendNpm.command, backendNpm.args, {
     cwd: backendDir,
