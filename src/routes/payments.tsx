@@ -80,7 +80,7 @@ function PaymentsPage() {
         amount: r.data.amount,
         date: r.data.date,
         periodStart: r.data.date,
-        periodEnd: computeEndDate(r.data.date, client.subscriptionType),
+        periodEnd: computeEndDate(r.data.date, client.subscriptionDurationMonths ?? (client.subscriptionType === "Annual" ? 12 : 1)),
         method: r.data.method,
         status: r.data.status,
       },
@@ -169,7 +169,7 @@ function PaymentsPage() {
                 value={form.clientId}
                 onValueChange={(v) => {
                   const c = clientMap.get(v);
-                  setForm({ ...form, clientId: v, amount: c?.subscriptionType === "Annual" ? (settings?.annualPrice ?? 480) : (settings?.monthlyPrice ?? 45) });
+                  setForm({ ...form, clientId: v, amount: c?.amountPaid || (c?.subscriptionType === "Annual" ? (settings?.annualPrice ?? 480) : (settings?.monthlyPrice ?? 45)) });
                 }}
               >
                 <SelectTrigger><SelectValue placeholder="Select client" /></SelectTrigger>

@@ -15,7 +15,10 @@ import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as RemindersRouteImport } from './routes/reminders'
 import { Route as PaymentsRouteImport } from './routes/payments'
+import { Route as PacksRouteImport } from './routes/packs'
+import { Route as OffersRouteImport } from './routes/offers'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as EquipmentRouteImport } from './routes/equipment'
 import { Route as ClientsRouteImport } from './routes/clients'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -49,9 +52,24 @@ const PaymentsRoute = PaymentsRouteImport.update({
   path: '/payments',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PacksRoute = PacksRouteImport.update({
+  id: '/packs',
+  path: '/packs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OffersRoute = OffersRouteImport.update({
+  id: '/offers',
+  path: '/offers',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EquipmentRoute = EquipmentRouteImport.update({
+  id: '/equipment',
+  path: '/equipment',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ClientsRoute = ClientsRouteImport.update({
@@ -68,7 +86,10 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/clients': typeof ClientsRoute
+  '/equipment': typeof EquipmentRoute
   '/login': typeof LoginRoute
+  '/offers': typeof OffersRoute
+  '/packs': typeof PacksRoute
   '/payments': typeof PaymentsRoute
   '/reminders': typeof RemindersRoute
   '/reports': typeof ReportsRoute
@@ -79,7 +100,10 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/clients': typeof ClientsRoute
+  '/equipment': typeof EquipmentRoute
   '/login': typeof LoginRoute
+  '/offers': typeof OffersRoute
+  '/packs': typeof PacksRoute
   '/payments': typeof PaymentsRoute
   '/reminders': typeof RemindersRoute
   '/reports': typeof ReportsRoute
@@ -91,7 +115,10 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/clients': typeof ClientsRoute
+  '/equipment': typeof EquipmentRoute
   '/login': typeof LoginRoute
+  '/offers': typeof OffersRoute
+  '/packs': typeof PacksRoute
   '/payments': typeof PaymentsRoute
   '/reminders': typeof RemindersRoute
   '/reports': typeof ReportsRoute
@@ -104,7 +131,10 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/clients'
+    | '/equipment'
     | '/login'
+    | '/offers'
+    | '/packs'
     | '/payments'
     | '/reminders'
     | '/reports'
@@ -115,7 +145,10 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/clients'
+    | '/equipment'
     | '/login'
+    | '/offers'
+    | '/packs'
     | '/payments'
     | '/reminders'
     | '/reports'
@@ -126,7 +159,10 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/clients'
+    | '/equipment'
     | '/login'
+    | '/offers'
+    | '/packs'
     | '/payments'
     | '/reminders'
     | '/reports'
@@ -138,7 +174,10 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ClientsRoute: typeof ClientsRoute
+  EquipmentRoute: typeof EquipmentRoute
   LoginRoute: typeof LoginRoute
+  OffersRoute: typeof OffersRoute
+  PacksRoute: typeof PacksRoute
   PaymentsRoute: typeof PaymentsRoute
   RemindersRoute: typeof RemindersRoute
   ReportsRoute: typeof ReportsRoute
@@ -191,11 +230,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PaymentsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/packs': {
+      id: '/packs'
+      path: '/packs'
+      fullPath: '/packs'
+      preLoaderRoute: typeof PacksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/offers': {
+      id: '/offers'
+      path: '/offers'
+      fullPath: '/offers'
+      preLoaderRoute: typeof OffersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/equipment': {
+      id: '/equipment'
+      path: '/equipment'
+      fullPath: '/equipment'
+      preLoaderRoute: typeof EquipmentRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/clients': {
@@ -218,7 +278,10 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ClientsRoute: ClientsRoute,
+  EquipmentRoute: EquipmentRoute,
   LoginRoute: LoginRoute,
+  OffersRoute: OffersRoute,
+  PacksRoute: PacksRoute,
   PaymentsRoute: PaymentsRoute,
   RemindersRoute: RemindersRoute,
   ReportsRoute: ReportsRoute,

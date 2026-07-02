@@ -18,6 +18,9 @@ import { clientStatus, computeEndDate, formatCurrency } from "@/lib/storage";
 import { useClients, useCreateClient, useUpdateClient, useDeleteClient } from "@/hooks/use-clients";
 import { useCreatePayment } from "@/hooks/use-payments";
 import { useSettings } from "@/hooks/use-settings";
+import { useOffers } from "@/hooks/use-offers";
+import { usePacks } from "@/hooks/use-packs";
+import { cn } from "@/lib/utils";
 import type { Client } from "@/lib/types";
 
 export const Route = createFileRoute("/clients")({
@@ -30,8 +33,11 @@ const schema = z.object({
   email: z.string().trim().email("Invalid email").max(120),
   gender: z.enum(["Male", "Female"]),
   joinDate: z.string().min(1),
-  subscriptionType: z.enum(["Monthly", "Annual"]),
+  subscriptionType: z.string().trim().min(2),
+  subscriptionPlanId: z.string().nullable().default(null),
+  subscriptionDurationMonths: z.coerce.number().int().min(1).max(36),
   subscriptionStart: z.string().min(1),
+  offerId: z.string().nullable().default(null),
   paymentStatus: z.enum(["Paid", "Unpaid", "Late"]),
   amountPaid: z.coerce.number().min(0),
   paymentMethod: z.enum(["Cash", "Card", "Bank transfer"]).default("Cash"),
@@ -49,15 +55,26 @@ const empty = (): FormState => ({
   gender: "Male",
   joinDate: new Date().toISOString().slice(0, 10),
   subscriptionType: "Monthly",
+  subscriptionPlanId: null,
+  subscriptionDurationMonths: 1,
   subscriptionStart: new Date().toISOString().slice(0, 10),
+  offerId: null,
   paymentStatus: "Paid",
   amountPaid: 0,
   paymentMethod: "Cash",
   notes: "",
 });
 
+function subscriptionFlagClass(status: ReturnType<typeof clientStatus>) {
+  if (status === "Expired" || status === "Unpaid") return "border-l-4 border-l-rose-500 bg-rose-50/70";
+  if (status === "Expiring soon") return "border-l-4 border-l-amber-400 bg-amber-50/70";
+  return "border-l-4 border-l-emerald-500 bg-emerald-50/60";
+}
+
 function ClientsPage() {
   const { data: settings } = useSettings();
+  const { data: offers = [] } = useOffers();
+  const { data: packs = [] } = usePacks();
   const { data: clients = [], isLoading } = useClients();
   const createClient = useCreateClient();
   const updateClient = useUpdateClient();
@@ -75,6 +92,8 @@ function ClientsPage() {
 
   const currency = settings?.currency ?? "MAD";
   const isPending = createClient.isPending || updateClient.isPending;
+  const activePacks = packs.filter((pack) => pack.status === "Active");
+  const typeOptions = Array.from(new Set(clients.map((c) => c.subscriptionType))).filter(Boolean);
 
   const filtered = clients.filter((c) => {
     const q = query.toLowerCase();
@@ -86,8 +105,15 @@ function ClientsPage() {
   });
 
   function openAdd() {
+    const defaultPack = activePacks[0];
     setEditing(null);
-    setForm({ ...empty(), amountPaid: settings?.monthlyPrice ?? 0 });
+    setForm({
+      ...empty(),
+      subscriptionType: defaultPack?.name ?? "Monthly",
+      subscriptionPlanId: defaultPack?.id ?? null,
+      subscriptionDurationMonths: defaultPack?.durationMonths ?? 1,
+      amountPaid: defaultPack?.price ?? settings?.monthlyPrice ?? 0,
+    });
     setErrors({});
     setDialogOpen(true);
   }
@@ -101,7 +127,10 @@ function ClientsPage() {
       gender: c.gender,
       joinDate: c.joinDate,
       subscriptionType: c.subscriptionType,
+      subscriptionPlanId: c.subscriptionPlanId ?? null,
+      subscriptionDurationMonths: c.subscriptionDurationMonths ?? (c.subscriptionType === "Annual" ? 12 : 1),
       subscriptionStart: c.subscriptionStart,
+      offerId: c.offerId ?? null,
       paymentStatus: c.paymentStatus,
       amountPaid: c.amountPaid,
       paymentMethod: "Cash",
@@ -120,7 +149,7 @@ function ClientsPage() {
       return;
     }
     const data = result.data;
-    const subscriptionEnd = computeEndDate(data.subscriptionStart, data.subscriptionType);
+    const subscriptionEnd = computeEndDate(data.subscriptionStart, data.subscriptionDurationMonths);
     const lastPaymentDate = data.paymentStatus === "Paid" ? data.subscriptionStart : null;
 
     if (editing) {
@@ -186,8 +215,9 @@ function ClientsPage() {
             <SelectTrigger className="h-10 w-full rounded-xl md:w-44"><SelectValue placeholder="Type" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All types</SelectItem>
-              <SelectItem value="Monthly">Monthly</SelectItem>
-              <SelectItem value="Annual">Annual</SelectItem>
+              {typeOptions.map((type) => (
+                <SelectItem key={type} value={type}>{type}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -224,7 +254,7 @@ function ClientsPage() {
               {filtered.map((c) => {
                 const status = clientStatus(c);
                 return (
-                  <TableRow key={c.id}>
+                  <TableRow key={c.id} className={cn("transition-colors hover:bg-muted/50", subscriptionFlagClass(status))}>
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-brand text-xs font-bold text-white">
@@ -299,23 +329,55 @@ function ClientsPage() {
             <Field label="Join date">
               <Input type="date" value={form.joinDate} onChange={(e) => setForm({ ...form, joinDate: e.target.value })} />
             </Field>
-            <Field label="Subscription type">
+            <Field label="Subscription pack">
               <Select
-                value={form.subscriptionType}
-                onValueChange={(v) => setForm({ ...form, subscriptionType: v as "Monthly" | "Annual", amountPaid: v === "Monthly" ? (settings?.monthlyPrice ?? 0) : (settings?.annualPrice ?? 0) })}
+                value={form.subscriptionPlanId ?? "custom"}
+                onValueChange={(v) => {
+                  const pack = activePacks.find((p) => p.id === v);
+                  setForm({
+                    ...form,
+                    subscriptionPlanId: pack?.id ?? null,
+                    subscriptionType: pack?.name ?? form.subscriptionType,
+                    subscriptionDurationMonths: pack?.durationMonths ?? form.subscriptionDurationMonths,
+                    amountPaid: pack?.price ?? form.amountPaid,
+                  });
+                }}
               >
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Select pack" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Monthly">Monthly</SelectItem>
-                  <SelectItem value="Annual">Annual</SelectItem>
+                  <SelectItem value="custom">Custom / existing pack</SelectItem>
+                  {activePacks.map((pack) => (
+                    <SelectItem key={pack.id} value={pack.id}>
+                      {pack.name} · {pack.durationMonths} month{pack.durationMonths === 1 ? "" : "s"} · {formatCurrency(pack.price, currency)}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
+            </Field>
+            <Field label="Pack name">
+              <Input value={form.subscriptionType} onChange={(e) => setForm({ ...form, subscriptionType: e.target.value, subscriptionPlanId: null })} />
+            </Field>
+            <Field label="Duration (months)" error={errors.subscriptionDurationMonths}>
+              <Input type="number" min={1} max={36} value={form.subscriptionDurationMonths} onChange={(e) => setForm({ ...form, subscriptionDurationMonths: Number(e.target.value), subscriptionPlanId: null })} />
             </Field>
             <Field label="Subscription start">
               <Input type="date" value={form.subscriptionStart} onChange={(e) => setForm({ ...form, subscriptionStart: e.target.value })} />
             </Field>
+            <Field label="Offer">
+              <Select value={form.offerId ?? "none"} onValueChange={(v) => setForm({ ...form, offerId: v === "none" ? null : v })}>
+                <SelectTrigger><SelectValue placeholder="No offer" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No offer</SelectItem>
+                  {offers.map((offer) => (
+                    <SelectItem key={offer.id} value={offer.id}>
+                      {offer.name} ({offer.discountPercent}% off)
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
             <Field label="End date (auto)">
-              <Input value={computeEndDate(form.subscriptionStart, form.subscriptionType)} readOnly className="bg-muted" />
+              <Input value={computeEndDate(form.subscriptionStart, form.subscriptionDurationMonths)} readOnly className="bg-muted" />
             </Field>
             <Field label="Payment status">
               <Select value={form.paymentStatus} onValueChange={(v) => setForm({ ...form, paymentStatus: v as "Paid" | "Unpaid" | "Late" })}>

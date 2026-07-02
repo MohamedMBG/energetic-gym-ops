@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo } from "react";
-import { Users, CalendarDays, CalendarRange, DollarSign, AlertTriangle, Clock, UserPlus, CreditCard, Send, ArrowRight } from "lucide-react";
+import { Users, CalendarDays, CalendarRange, DollarSign, AlertTriangle, Clock, UserPlus, CreditCard, Send, ArrowRight, BadgePercent, TrendingUp } from "lucide-react";
 import { StatCard } from "@/components/StatCard";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -15,6 +15,7 @@ import { clientStatus, formatCurrency } from "@/lib/storage";
 import { useClients } from "@/hooks/use-clients";
 import { usePayments } from "@/hooks/use-payments";
 import { useSettings } from "@/hooks/use-settings";
+import { useOffers } from "@/hooks/use-offers";
 
 export const Route = createFileRoute("/")({
   component: Dashboard,
@@ -24,6 +25,7 @@ function Dashboard() {
   const { data: clients = [] } = useClients();
   const { data: payments = [] } = usePayments();
   const { data: settings } = useSettings();
+  const { data: offers = [] } = useOffers();
   const currency = settings?.currency ?? "MAD";
 
   const now = new Date();
@@ -31,8 +33,10 @@ function Dashboard() {
   const thisYear = now.getFullYear();
 
   const active = clients.filter((c) => clientStatus(c) !== "Expired").length;
-  const monthly = clients.filter((c) => c.subscriptionType === "Monthly").length;
-  const annual = clients.filter((c) => c.subscriptionType === "Annual").length;
+  const monthly = clients.filter((c) => (c.subscriptionDurationMonths ?? 1) === 1).length;
+  const threeMonth = clients.filter((c) => c.subscriptionDurationMonths === 3).length;
+  const sixMonth = clients.filter((c) => c.subscriptionDurationMonths === 6).length;
+  const yearly = clients.filter((c) => c.subscriptionDurationMonths === 12).length;
   const earningsThisMonth = payments
     .filter((p) => {
       const d = new Date(p.date);
@@ -41,6 +45,9 @@ function Dashboard() {
     .reduce((s, p) => s + p.amount, 0);
   const unpaid = clients.filter((c) => c.paymentStatus !== "Paid").length;
   const expiringSoon = clients.filter((c) => clientStatus(c) === "Expiring soon").length;
+  const activeOffers = offers.filter((o) => o.status === "Active").length;
+  const offerClients = clients.filter((c) => c.offerId);
+  const offerClientRate = clients.length ? Math.round((offerClients.length / clients.length) * 100) : 0;
 
   const monthsData = useMemo(() => {
     const out: { month: string; earnings: number }[] = [];
@@ -58,6 +65,31 @@ function Dashboard() {
     return out;
   }, [payments, thisMonth, thisYear]);
 
+  const offerStats = useMemo(() => {
+    return offers
+      .map((offer) => {
+        const subscribers = clients.filter((c) => c.offerId === offer.id);
+        const revenue = payments
+          .filter((p) => subscribers.some((c) => c.id === p.clientId) && p.status === "Paid")
+          .reduce((sum, payment) => sum + payment.amount, 0);
+        const progress = offer.targetSubscriptions > 0
+          ? Math.round((subscribers.length / offer.targetSubscriptions) * 100)
+          : 0;
+        const health = offer.targetSubscriptions === 0 || subscribers.length >= offer.targetSubscriptions
+          ? "Going well"
+          : progress >= 50
+            ? "Needs push"
+            : "Under target";
+
+        return { offer, subscribers: subscribers.length, revenue, progress, health };
+      })
+      .sort((a, b) => b.subscribers - a.subscribers || b.revenue - a.revenue)
+      .slice(0, 5);
+  }, [clients, offers, payments]);
+
+  const offerRevenue = offerStats.reduce((sum, row) => sum + row.revenue, 0);
+  const bestOffer = offerStats[0];
+
   const recent = [...payments]
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 6);
@@ -69,16 +101,19 @@ function Dashboard() {
         description="Here's what's happening at your gym today."
       />
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <QuickAction to="/clients" icon={UserPlus} label="Add new client" hint="Register a member" />
+        <QuickAction to="/offers" icon={BadgePercent} label="Create offer" hint="Launch a campaign" />
         <QuickAction to="/payments" icon={CreditCard} label="Record payment" hint="Log a transaction" />
         <QuickAction to="/reminders" icon={Send} label="Send reminders" hint={`${expiringSoon} due soon`} highlight={expiringSoon > 0} />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Active clients" value={active} icon={Users} variant="brand" hint="Currently subscribed" />
-        <StatCard label="Monthly subs" value={monthly} icon={CalendarDays} hint="Active monthly plans" />
-        <StatCard label="Annual subs" value={annual} icon={CalendarRange} hint="Active annual plans" />
+        <StatCard label="Monthly subs" value={monthly} icon={CalendarDays} hint="1-month packs" />
+        <StatCard label="3-month packs" value={threeMonth} icon={CalendarRange} hint="Quarterly commitments" />
+        <StatCard label="6-month packs" value={sixMonth} icon={CalendarRange} hint="Medium-term commitments" />
+        <StatCard label="Yearly packs" value={yearly} icon={CalendarRange} hint="12-month subscriptions" />
         <StatCard
           label="Earnings this month"
           value={formatCurrency(earningsThisMonth, currency)}
@@ -87,7 +122,9 @@ function Dashboard() {
           hint={now.toLocaleString("en", { month: "long", year: "numeric" })}
         />
         <StatCard label="Unpaid clients" value={unpaid} icon={AlertTriangle} variant="danger" hint="Need follow-up" />
-        <StatCard label="Expiring soon" value={expiringSoon} icon={Clock} variant="warning" hint="Within 7 days" />
+        <StatCard label="Expiring soon" value={expiringSoon} icon={Clock} variant="warning" hint="Within 5 days" />
+        <StatCard label="Active offers" value={activeOffers} icon={BadgePercent} variant="brand" hint={`${offerClients.length} offer subscribers`} />
+        <StatCard label="Offer adoption" value={`${offerClientRate}%`} icon={TrendingUp} variant="warning" hint="Members from campaigns" />
       </div>
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
@@ -146,6 +183,68 @@ function Dashboard() {
           </div>
         </Card>
       </div>
+
+      <Card className="rounded-2xl border-0 p-5 shadow-soft">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-bold">Offer business analytics</h2>
+            <p className="text-xs text-muted-foreground">Which campaigns are bringing subscribers and revenue.</p>
+          </div>
+          <div className="rounded-xl bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700">
+            {formatCurrency(offerRevenue, currency)} tracked offer revenue
+          </div>
+        </div>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Offer</TableHead>
+                <TableHead>Subscribers</TableHead>
+                <TableHead>Progress</TableHead>
+                <TableHead>Health</TableHead>
+                <TableHead className="text-right">Revenue</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {offerStats.map(({ offer, subscribers, revenue, progress, health }) => (
+                <TableRow key={offer.id}>
+                  <TableCell>
+                    <div className="font-semibold">{offer.name}</div>
+                    <div className="text-xs text-muted-foreground">{offer.discountPercent}% discount · {offer.status}</div>
+                  </TableCell>
+                  <TableCell className="font-semibold">{subscribers}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <div className="h-2 w-28 overflow-hidden rounded-full bg-muted">
+                        <div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(progress, 100)}%` }} />
+                      </div>
+                      <span className="text-xs font-semibold">{offer.targetSubscriptions ? `${progress}%` : "No target"}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <span className={health === "Going well" ? "font-semibold text-emerald-700" : health === "Needs push" ? "font-semibold text-amber-700" : "font-semibold text-rose-700"}>
+                      {health}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-right font-bold">{formatCurrency(revenue, currency)}</TableCell>
+                </TableRow>
+              ))}
+              {offerStats.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
+                    No offer data yet. Create an offer and assign clients to it.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+        {bestOffer && (
+          <div className="mt-4 rounded-xl bg-muted/60 px-4 py-3 text-sm">
+            Best campaign: <span className="font-bold">{bestOffer.offer.name}</span> with <span className="font-bold">{bestOffer.subscribers}</span> subscriber{bestOffer.subscribers === 1 ? "" : "s"}.
+          </div>
+        )}
+      </Card>
 
       <Card className="rounded-2xl border-0 p-5 shadow-soft">
         <div className="mb-4">

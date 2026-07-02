@@ -42,8 +42,9 @@ export function addMonths(dateStr: string, months: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-export function computeEndDate(start: string, type: SubscriptionType): string {
-  return addMonths(start, type === "Monthly" ? 1 : 12);
+export function computeEndDate(start: string, typeOrMonths: SubscriptionType | number): string {
+  if (typeof typeOrMonths === "number") return addMonths(start, typeOrMonths);
+  return addMonths(start, typeOrMonths === "Annual" || typeOrMonths === "Yearly" ? 12 : 1);
 }
 
 export function getClients(): Client[] {
@@ -117,8 +118,11 @@ function ensureSeed() {
       gender: (s.gender as Client["gender"]) || "Male",
       joinDate: daysFromNow(s.startOffset - 5),
       subscriptionType: s.subscriptionType,
+      subscriptionPlanId: null,
+      subscriptionDurationMonths: s.subscriptionType === "Annual" ? 12 : 1,
       subscriptionStart: start,
       subscriptionEnd: end,
+      offerId: null,
       paymentStatus: s.status,
       lastPaymentDate: s.status === "Unpaid" ? null : start,
       amountPaid: s.status === "Unpaid" ? 0 : amount,
@@ -172,7 +176,7 @@ export function clientStatus(c: Client): "Active" | "Expiring soon" | "Expired" 
   const end = new Date(c.subscriptionEnd);
   const diffDays = Math.ceil((end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
   if (diffDays < 0) return "Expired";
-  if (diffDays <= 7) return "Expiring soon";
+  if (diffDays <= 5) return "Expiring soon";
   return "Active";
 }
 

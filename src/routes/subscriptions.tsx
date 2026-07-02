@@ -10,10 +10,17 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { clientStatus } from "@/lib/storage";
 import { useClients, useDeleteClient } from "@/hooks/use-clients";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/subscriptions")({
   component: SubscriptionsPage,
 });
+
+function subscriptionFlagClass(status: ReturnType<typeof clientStatus>) {
+  if (status === "Expired" || status === "Unpaid") return "border-l-4 border-l-rose-500 bg-rose-50/70";
+  if (status === "Expiring soon") return "border-l-4 border-l-amber-400 bg-amber-50/70";
+  return "border-l-4 border-l-emerald-500 bg-emerald-50/60";
+}
 
 function SubscriptionsPage() {
   const { data: clients = [], isLoading } = useClients();
@@ -79,18 +86,19 @@ function SubscriptionsPage() {
               )}
               {clients.map((c) => {
                 const days = Math.ceil((new Date(c.subscriptionEnd).getTime() - Date.now()) / 86400000);
+                const status = clientStatus(c);
                 return (
-                  <TableRow key={c.id}>
+                  <TableRow key={c.id} className={cn("transition-colors hover:bg-muted/50", subscriptionFlagClass(status))}>
                     <TableCell className="font-medium">{c.fullName}</TableCell>
                     <TableCell><StatusBadge status={c.subscriptionType} /></TableCell>
                     <TableCell>{new Date(c.subscriptionStart).toLocaleDateString()}</TableCell>
                     <TableCell>{new Date(c.subscriptionEnd).toLocaleDateString()}</TableCell>
                     <TableCell>
-                      <span className={days < 0 ? "text-rose-600 font-semibold" : days <= 7 ? "text-amber-700 font-semibold" : ""}>
+                      <span className={days < 0 ? "text-rose-600 font-semibold" : days <= 5 ? "text-amber-700 font-semibold" : "text-emerald-700 font-semibold"}>
                         {days < 0 ? `${Math.abs(days)}d overdue` : `${days}d`}
                       </span>
                     </TableCell>
-                    <TableCell><StatusBadge status={clientStatus(c)} /></TableCell>
+                    <TableCell><StatusBadge status={status} /></TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="icon" onClick={() => setDeleteId(c.id)}>
                         <Trash2 className="h-4 w-4 text-rose-600" />

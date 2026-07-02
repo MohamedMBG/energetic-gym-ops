@@ -39,10 +39,16 @@ function ReportsPage() {
     return arr;
   }, [payments]);
 
-  const byType = [
-    { name: "Monthly", value: payments.filter((p) => p.status === "Paid" && clients.find((c) => c.id === p.clientId)?.subscriptionType === "Monthly").reduce((s, p) => s + p.amount, 0) },
-    { name: "Annual", value: payments.filter((p) => p.status === "Paid" && clients.find((c) => c.id === p.clientId)?.subscriptionType === "Annual").reduce((s, p) => s + p.amount, 0) },
-  ];
+  const byType = useMemo(() => {
+    const totals = new Map<string, number>();
+    payments
+      .filter((p) => p.status === "Paid")
+      .forEach((payment) => {
+        const type = clients.find((c) => c.id === payment.clientId)?.subscriptionType ?? "Unknown";
+        totals.set(type, (totals.get(type) ?? 0) + payment.amount);
+      });
+    return [...totals.entries()].map(([name, value]) => ({ name, value }));
+  }, [clients, payments]);
 
   const paidVsUnpaid = [
     { name: "Paid", value: clients.filter((c) => c.paymentStatus === "Paid").length },
@@ -70,12 +76,12 @@ function ReportsPage() {
           <div className="mt-2 text-3xl font-extrabold">{formatCurrency(total, currency)}</div>
         </Card>
         <Card className="rounded-2xl border-0 p-5 shadow-soft">
-          <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">From monthly plans</div>
-          <div className="mt-2 text-3xl font-extrabold">{formatCurrency(byType[0].value, currency)}</div>
+          <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Best-selling pack</div>
+          <div className="mt-2 text-3xl font-extrabold">{[...byType].sort((a, b) => b.value - a.value)[0]?.name ?? "None"}</div>
         </Card>
         <Card className="rounded-2xl border-0 p-5 shadow-soft">
-          <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">From annual plans</div>
-          <div className="mt-2 text-3xl font-extrabold">{formatCurrency(byType[1].value, currency)}</div>
+          <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Pack types sold</div>
+          <div className="mt-2 text-3xl font-extrabold">{byType.length}</div>
         </Card>
       </div>
 
@@ -99,12 +105,12 @@ function ReportsPage() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card className="rounded-2xl border-0 p-5 shadow-soft">
-          <h2 className="mb-4 text-lg font-bold">Earnings by subscription type</h2>
+          <h2 className="mb-4 text-lg font-bold">Earnings by pack type</h2>
           <div className="h-72 w-full">
             <ResponsiveContainer>
               <PieChart>
                 <Pie data={byType} dataKey="value" nameKey="name" innerRadius={60} outerRadius={100} paddingAngle={4}>
-                  {byType.map((_, i) => <Cell key={i} fill={COLORS[i]} />)}
+                  {byType.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                 </Pie>
                 <Tooltip formatter={(v: number) => formatCurrency(v, currency)} />
                 <Legend />

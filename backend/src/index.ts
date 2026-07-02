@@ -11,6 +11,9 @@ import authRoutes from './routes/auth';
 import clientRoutes from './routes/clients';
 import paymentRoutes from './routes/payments';
 import settingsRoutes from './routes/settings';
+import offerRoutes from './routes/offers';
+import packRoutes from './routes/packs';
+import equipmentRoutes from './routes/equipment';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -45,6 +48,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/clients', clientRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/offers', offerRoutes);
+app.use('/api/packs', packRoutes);
+app.use('/api/equipment', equipmentRoutes);
 
 app.get('/health', (_req, res) => {
   res.json({ data: { ok: true } });

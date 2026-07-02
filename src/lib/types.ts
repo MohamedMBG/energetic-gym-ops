@@ -1,7 +1,44 @@
-export type SubscriptionType = "Monthly" | "Annual";
+export type SubscriptionType = string;
 export type PaymentStatus = "Paid" | "Unpaid" | "Late";
 export type PaymentMethod = "Cash" | "Card" | "Bank transfer";
 export type Gender = "Male" | "Female";
+export type OfferStatus = "Active" | "Paused" | "Ended";
+export type PackStatus = "Active" | "Archived";
+export type EquipmentStatus = "Operational" | "Maintenance" | "Out of service";
+
+export interface SubscriptionPack {
+  id: string;
+  name: string;
+  durationMonths: number;
+  price: number;
+  description: string;
+  status: PackStatus;
+  isDefault: number;
+}
+
+export interface Offer {
+  id: string;
+  name: string;
+  description: string;
+  discountPercent: number;
+  startDate: string;
+  endDate: string | null;
+  targetSubscriptions: number;
+  status: OfferStatus;
+}
+
+export interface Equipment {
+  id: string;
+  name: string;
+  category: string;
+  status: EquipmentStatus;
+  lastMaintenanceDate: string | null;
+  nextMaintenanceDate: string | null;
+  repairCost: number;
+  supplierName: string;
+  supplierPhone: string;
+  notes: string;
+}
 
 export interface Client {
   id: string;
@@ -11,8 +48,11 @@ export interface Client {
   gender: Gender;
   joinDate: string; // ISO date
   subscriptionType: SubscriptionType;
+  subscriptionPlanId: string | null;
+  subscriptionDurationMonths: number;
   subscriptionStart: string;
   subscriptionEnd: string;
+  offerId: string | null;
   paymentStatus: PaymentStatus;
   lastPaymentDate: string | null;
   amountPaid: number;
