@@ -1,4 +1,4 @@
-import { Router, CookieOptions } from 'express';
+import { Router, CookieOptions, Request } from 'express';
 import { z } from 'zod';
 import { eq } from 'drizzle-orm';
 import { db } from '../db';
@@ -13,15 +13,41 @@ const router = Router();
 
 const COOKIE_NAME = 'gym_ops_token';
 
-function cookieOptions(): CookieOptions {
-  const isProduction = process.env.NODE_ENV === 'production';
+function isLocalHost(host: string): boolean {
+  return (
+    host === 'localhost' ||
+    host === '127.0.0.1' ||
+    host === '::1' ||
+    /^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(host) ||
+    /^192\.168\.\d{1,3}\.\d{1,3}$/.test(host) ||
+    /^172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}$/.test(host)
+  );
+}
 
-  return {
+function isLocalRequest(req: Request): boolean {
+  const origin = req.get('origin');
+  if (!origin) return process.env.NODE_ENV !== 'production';
+
+  try {
+    const url = new URL(origin);
+    return url.protocol === 'http:' && isLocalHost(url.hostname);
+  } catch {
+    return false;
+  }
+}
+
+function cookieOptions(req: Request, includeMaxAge = true): CookieOptions {
+  const needsCrossSiteCookie = process.env.NODE_ENV === 'production' || !isLocalRequest(req);
+  const options: CookieOptions = {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? 'none' : 'lax',
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    secure: needsCrossSiteCookie,
+    sameSite: needsCrossSiteCookie ? 'none' : 'lax',
+    path: '/',
   };
+
+  if (includeMaxAge) options.maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+  return options;
 }
 
 const setupSchema = z.object({
@@ -53,7 +79,7 @@ router.post('/setup', validateBody(setupSchema), async (req, res) => {
   await db.insert(users).values({ id: userId, gymId, email, passwordHash });
 
   const token = signToken({ userId, gymId });
-  res.cookie(COOKIE_NAME, token, cookieOptions());
+  res.cookie(COOKIE_NAME, token, cookieOptions(req));
   ok(res, { message: 'Setup complete' }, 201);
 });
 
@@ -75,13 +101,13 @@ router.post('/login', validateBody(loginSchema), async (req, res) => {
   }
 
   const token = signToken({ userId: user.id, gymId: user.gymId });
-  res.cookie(COOKIE_NAME, token, cookieOptions());
+  res.cookie(COOKIE_NAME, token, cookieOptions(req));
   ok(res, { message: 'Logged in' });
 });
 
 // POST /api/auth/logout
-router.post('/logout', (_req, res) => {
-  res.clearCookie(COOKIE_NAME, cookieOptions());
+router.post('/logout', (req, res) => {
+  res.clearCookie(COOKIE_NAME, cookieOptions(req, false));
   ok(res, { message: 'Logged out' });
 });
 
