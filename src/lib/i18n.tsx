@@ -209,6 +209,8 @@ const dictionary: Dictionary = {
   "dashboard.offerSubscribers": { en: "offer subscribers", fr: "abonnes aux offres" },
   "dashboard.offerAdoption": { en: "Offer adoption", fr: "Adoption des offres" },
   "dashboard.membersFromCampaigns": { en: "Members from campaigns", fr: "Membres issus des campagnes" },
+  "dashboard.membershipPlans": { en: "Membership plans", fr: "Formules d'abonnement" },
+  "dashboard.planMixHint": { en: "Members by plan length", fr: "Membres par durée" },
   "dashboard.earningsTrend": { en: "Earnings trend", fr: "Tendance des gains" },
   "dashboard.lastSixMonths": { en: "Last 6 months", fr: "6 derniers mois" },
   "dashboard.totalRevenue": { en: "Total revenue", fr: "Revenu total" },

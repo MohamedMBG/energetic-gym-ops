@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo } from "react";
-import { Users, CalendarDays, CalendarRange, DollarSign, AlertTriangle, Clock, UserPlus, CreditCard, Send, ArrowRight, BadgePercent, TrendingUp } from "lucide-react";
+import { Users, CalendarDays, CalendarRange, DollarSign, AlertTriangle, Clock, UserPlus, CreditCard, Send, ArrowRight, BadgePercent } from "lucide-react";
 import { StatCard } from "@/components/StatCard";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -110,12 +110,8 @@ function Dashboard() {
         <QuickAction to="/reminders" icon={Send} label={t("dashboard.sendReminders")} hint={`${expiringSoon} ${t("dashboard.dueSoon")}`} highlight={expiringSoon > 0} />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <StatCard label={t("dashboard.activeClients")} value={active} icon={Users} variant="brand" hint={t("dashboard.currentlySubscribed")} />
-        <StatCard label={t("dashboard.monthlySubs")} value={monthly} icon={CalendarDays} hint={t("dashboard.oneMonthPacks")} />
-        <StatCard label={t("dashboard.threeMonthPacks")} value={threeMonth} icon={CalendarRange} hint={t("dashboard.quarterlyCommitments")} />
-        <StatCard label={t("dashboard.sixMonthPacks")} value={sixMonth} icon={CalendarRange} hint={t("dashboard.mediumTermCommitments")} />
-        <StatCard label={t("dashboard.yearlyPacks")} value={yearly} icon={CalendarRange} hint={t("dashboard.twelveMonthSubscriptions")} />
         <StatCard
           label={t("dashboard.earningsThisMonth")}
           value={formatCurrency(earningsThisMonth, currency)}
@@ -125,9 +121,30 @@ function Dashboard() {
         />
         <StatCard label={t("dashboard.unpaidClients")} value={unpaid} icon={AlertTriangle} variant="danger" hint={t("dashboard.needFollowUp")} />
         <StatCard label={t("dashboard.expiringSoon")} value={expiringSoon} icon={Clock} variant="warning" hint={t("dashboard.withinFiveDays")} />
-        <StatCard label={t("dashboard.activeOffers")} value={activeOffers} icon={BadgePercent} variant="brand" hint={`${offerClients.length} ${t("dashboard.offerSubscribers")}`} />
-        <StatCard label={t("dashboard.offerAdoption")} value={`${offerClientRate}%`} icon={TrendingUp} variant="warning" hint={t("dashboard.membersFromCampaigns")} />
       </div>
+
+      <Card className="rounded-2xl border-0 p-5 shadow-soft">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-bold">{t("dashboard.membershipPlans")}</h2>
+            <p className="text-xs text-muted-foreground">{t("dashboard.planMixHint")}</p>
+          </div>
+          <div className="text-right">
+            <div className="text-2xl font-extrabold tracking-tight">{clients.length}</div>
+            <div className="text-xs text-muted-foreground">{t("dashboard.totalMembers")}</div>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <PlanStat icon={CalendarDays} label={`1 ${t("common.month")}`} value={monthly} />
+          <PlanStat icon={CalendarRange} label={`3 ${t("common.months")}`} value={threeMonth} />
+          <PlanStat icon={CalendarRange} label={`6 ${t("common.months")}`} value={sixMonth} />
+          <PlanStat icon={CalendarRange} label={`12 ${t("common.months")}`} value={yearly} />
+        </div>
+        <div className="mt-4 flex flex-wrap gap-x-6 gap-y-1 border-t border-border pt-3 text-xs text-muted-foreground">
+          <span><span className="font-semibold text-foreground">{activeOffers}</span> {t("dashboard.activeOffers").toLowerCase()}</span>
+          <span><span className="font-semibold text-foreground">{offerClientRate}%</span> {t("dashboard.offerAdoption").toLowerCase()}</span>
+        </div>
+      </Card>
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         <Card className="rounded-2xl border-0 p-5 shadow-soft xl:col-span-2">
@@ -202,8 +219,8 @@ function Dashboard() {
               <TableRow>
                 <TableHead>{t("common.offer")}</TableHead>
                 <TableHead>{t("common.subscribers")}</TableHead>
-                <TableHead>{t("common.progress")}</TableHead>
-                <TableHead>{t("common.health")}</TableHead>
+                <TableHead className="hidden md:table-cell">{t("common.progress")}</TableHead>
+                <TableHead className="hidden sm:table-cell">{t("common.health")}</TableHead>
                 <TableHead className="text-right">{t("common.revenue")}</TableHead>
               </TableRow>
             </TableHeader>
@@ -215,7 +232,7 @@ function Dashboard() {
                     <div className="text-xs text-muted-foreground">{offer.discountPercent}% {t("common.discount").toLowerCase()} - {t(`status.${offer.status}`, offer.status)}</div>
                   </TableCell>
                   <TableCell className="font-semibold">{subscribers}</TableCell>
-                  <TableCell>
+                  <TableCell className="hidden md:table-cell">
                     <div className="flex items-center gap-3">
                       <div className="h-2 w-28 overflow-hidden rounded-full bg-muted">
                         <div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(progress, 100)}%` }} />
@@ -223,7 +240,7 @@ function Dashboard() {
                       <span className="text-xs font-semibold">{offer.targetSubscriptions ? `${progress}%` : t("dashboard.noTarget")}</span>
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden sm:table-cell">
                     <span className={health === "Going well" ? "font-semibold text-emerald-700" : health === "Needs push" ? "font-semibold text-amber-700" : "font-semibold text-rose-700"}>
                       {t(`health.${health}`)}
                     </span>
@@ -258,8 +275,8 @@ function Dashboard() {
             <TableHeader>
               <TableRow>
                 <TableHead>{t("common.client")}</TableHead>
-                <TableHead>{t("common.date")}</TableHead>
-                <TableHead>{t("common.method")}</TableHead>
+                <TableHead className="hidden sm:table-cell">{t("common.date")}</TableHead>
+                <TableHead className="hidden md:table-cell">{t("common.method")}</TableHead>
                 <TableHead>{t("common.status")}</TableHead>
                 <TableHead className="text-right">{t("common.amount")}</TableHead>
               </TableRow>
@@ -270,8 +287,8 @@ function Dashboard() {
                 return (
                   <TableRow key={p.id}>
                     <TableCell className="font-medium">{client?.fullName ?? p.clientName ?? "—"}</TableCell>
-                    <TableCell>{new Date(p.date).toLocaleDateString()}</TableCell>
-                    <TableCell>{t(`status.${p.method}`, p.method)}</TableCell>
+                    <TableCell className="hidden sm:table-cell">{new Date(p.date).toLocaleDateString()}</TableCell>
+                    <TableCell className="hidden md:table-cell">{t(`status.${p.method}`, p.method)}</TableCell>
                     <TableCell><StatusBadge status={p.status} /></TableCell>
                     <TableCell className="text-right font-bold">
                       {formatCurrency(p.amount, currency)}
@@ -288,6 +305,20 @@ function Dashboard() {
           </Table>
         </div>
       </Card>
+    </div>
+  );
+}
+
+function PlanStat({ icon: Icon, label, value }: { icon: typeof UserPlus; label: string; value: number }) {
+  return (
+    <div className="flex items-center gap-3 rounded-xl bg-muted/50 p-3">
+      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-background text-primary">
+        <Icon className="h-4 w-4" />
+      </div>
+      <div>
+        <div className="text-xl font-extrabold leading-none tracking-tight">{value}</div>
+        <div className="mt-1 text-xs text-muted-foreground">{label}</div>
+      </div>
     </div>
   );
 }
