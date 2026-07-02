@@ -51,6 +51,7 @@ const dictionary: Dictionary = {
   "common.actions": { en: "Actions", fr: "Actions" },
   "common.cancel": { en: "Cancel", fr: "Annuler" },
   "common.delete": { en: "Delete", fr: "Supprimer" },
+  "common.edit": { en: "Edit", fr: "Modifier" },
   "common.saveChanges": { en: "Save changes", fr: "Enregistrer" },
   "common.saving": { en: "Saving...", fr: "Enregistrement..." },
   "common.search": { en: "Search", fr: "Rechercher" },

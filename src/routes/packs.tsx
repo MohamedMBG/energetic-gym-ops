@@ -148,7 +148,9 @@ function PacksPage() {
 
       <Card className="rounded-2xl border-0 p-5 shadow-soft">
         <h2 className="mb-4 text-lg font-bold">{t("packs.all")}</h2>
-        <div className="overflow-x-auto">
+
+        {/* Desktop: table */}
+        <div className="hidden overflow-x-auto md:block">
           <Table>
             <TableHeader>
               <TableRow>
@@ -191,6 +193,51 @@ function PacksPage() {
               )}
             </TableBody>
           </Table>
+        </div>
+
+        {/* Mobile: card list */}
+        <div className="space-y-3 md:hidden">
+          {isLoading && (
+            <div className="py-8 text-center text-sm text-muted-foreground">{t("common.loading")}</div>
+          )}
+          {!isLoading && packs.length === 0 && (
+            <div className="py-8 text-center text-sm text-muted-foreground">{t("packs.noPacks")}</div>
+          )}
+          {packs.map((pack) => (
+            <div key={pack.id} className="rounded-xl border border-border/60 bg-card p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="truncate font-semibold">{pack.name}</span>
+                    {pack.isDefault && (
+                      <span className="shrink-0 rounded-full bg-gradient-brand px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+                        {t("common.default")}
+                      </span>
+                    )}
+                  </div>
+                  {pack.description && (
+                    <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{pack.description}</p>
+                  )}
+                </div>
+                <StatusBadge status={pack.status} />
+              </div>
+
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                <MetricTile label={t("packs.duration")} value={`${pack.durationMonths} ${pack.durationMonths === 1 ? t("common.month") : t("common.months")}`} />
+                <MetricTile label={t("common.price")} value={formatCurrency(pack.price, currency)} />
+                <MetricTile label={t("common.members")} value={String(usageByPack.get(pack.id) ?? 0)} />
+              </div>
+
+              <div className="mt-3 flex gap-2">
+                <Button variant="outline" size="sm" className="flex-1" onClick={() => openEdit(pack)}>
+                  <Pencil className="mr-1.5 h-3.5 w-3.5" /> {t("common.edit")}
+                </Button>
+                <Button variant="outline" size="sm" className="flex-1 text-rose-600 hover:text-rose-700" onClick={() => setDeleteId(pack.id)}>
+                  <Trash2 className="mr-1.5 h-3.5 w-3.5" /> {t("common.delete")}
+                </Button>
+              </div>
+            </div>
+          ))}
         </div>
       </Card>
 
@@ -250,6 +297,15 @@ function PacksPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    </div>
+  );
+}
+
+function MetricTile({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg bg-muted/50 px-2.5 py-2">
+      <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className="mt-0.5 truncate text-sm font-semibold">{value}</div>
     </div>
   );
 }
