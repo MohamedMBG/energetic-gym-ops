@@ -35,7 +35,7 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="text-sm text-muted-foreground">Loading…</div>
+        <div className="text-sm text-muted-foreground">{t("app.loading")}</div>
       </div>
     );
   }

@@ -19,6 +19,7 @@ import { useClients } from "@/hooks/use-clients";
 import { useCreateOffer, useDeleteOffer, useOffers, useUpdateOffer } from "@/hooks/use-offers";
 import { usePayments } from "@/hooks/use-payments";
 import { useSettings } from "@/hooks/use-settings";
+import { useI18n } from "@/lib/i18n";
 import { formatCurrency } from "@/lib/storage";
 import type { Offer, OfferStatus } from "@/lib/types";
 
@@ -49,6 +50,7 @@ const empty = (): FormState => ({
 });
 
 function OffersPage() {
+  const { t } = useI18n();
   const { data: offers = [], isLoading } = useOffers();
   const { data: clients = [] } = useClients();
   const { data: payments = [] } = usePayments();
@@ -130,7 +132,7 @@ function OffersPage() {
 
     mutation({
       onSuccess: () => {
-        toast.success(editing ? "Offer updated" : "Offer created");
+        toast.success(editing ? t("offers.updated") : t("offers.created"));
         setDialogOpen(false);
       },
       onError: (err) => toast.error(err.message),
@@ -141,7 +143,7 @@ function OffersPage() {
     if (!deleteId) return;
     deleteOffer.mutate(deleteId, {
       onSuccess: () => {
-        toast.success("Offer deleted");
+        toast.success(t("offers.deleted"));
         setDeleteId(null);
       },
       onError: (err) => toast.error(err.message),
@@ -151,48 +153,48 @@ function OffersPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Offers"
-        description="Create campaigns and track how many members subscribe through each offer."
+        title={t("offers.title")}
+        description={t("offers.description")}
         actions={
           <Button onClick={openAdd} className="bg-gradient-brand-strong text-white shadow-soft hover:opacity-90">
-            <Plus className="mr-2 h-4 w-4" /> Add offer
+            <Plus className="mr-2 h-4 w-4" /> {t("offers.add")}
           </Button>
         }
       />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Active offers" value={activeOffers} icon={Plus} variant="brand" hint="Campaigns currently running" />
-        <StatCard label="Offer subscribers" value={offerSubscribers} icon={Plus} hint="Clients assigned to offers" />
-        <StatCard label="Offer revenue" value={formatCurrency(offerRevenue, currency)} icon={Plus} variant="brand" hint="Paid revenue from offer clients" />
-        <StatCard label="Best offer" value={bestOffer?.offer.name ?? "None"} icon={Plus} variant="warning" hint={`${bestOffer?.subscribers ?? 0} subscriber${bestOffer?.subscribers === 1 ? "" : "s"}`} />
+        <StatCard label={t("offers.activeOffers")} value={activeOffers} icon={Plus} variant="brand" hint={t("offers.currentlyRunning")} />
+        <StatCard label={t("offers.offerSubscribers")} value={offerSubscribers} icon={Plus} hint={t("offers.clientsAssigned")} />
+        <StatCard label={t("offers.offerRevenue")} value={formatCurrency(offerRevenue, currency)} icon={Plus} variant="brand" hint={t("offers.paidRevenue")} />
+        <StatCard label={t("offers.bestOffer")} value={bestOffer?.offer.name ?? t("common.none")} icon={Plus} variant="warning" hint={`${bestOffer?.subscribers ?? 0} ${t((bestOffer?.subscribers ?? 0) === 1 ? "dashboard.subscriber" : "dashboard.subscribersPlural")}`} />
       </div>
 
       <Card className="rounded-2xl border-0 p-5 shadow-soft">
-        <h2 className="mb-4 text-lg font-bold">Offer performance</h2>
+        <h2 className="mb-4 text-lg font-bold">{t("offers.performance")}</h2>
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Offer</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Discount</TableHead>
-                <TableHead>Subscribers</TableHead>
-                <TableHead>Revenue</TableHead>
-                <TableHead>Health</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>{t("common.offer")}</TableHead>
+                <TableHead>{t("common.status")}</TableHead>
+                <TableHead>{t("common.discount")}</TableHead>
+                <TableHead>{t("common.subscribers")}</TableHead>
+                <TableHead>{t("common.revenue")}</TableHead>
+                <TableHead>{t("common.health")}</TableHead>
+                <TableHead className="text-right">{t("common.actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading && (
                 <TableRow>
-                  <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">Loading...</TableCell>
+                  <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">{t("common.loading")}</TableCell>
                 </TableRow>
               )}
               {stats.map(({ offer, subscribers, revenue, progress, health }) => (
                 <TableRow key={offer.id}>
                   <TableCell>
                     <div className="font-semibold">{offer.name}</div>
-                    <div className="max-w-md truncate text-xs text-muted-foreground">{offer.description || "No description"}</div>
+                    <div className="max-w-md truncate text-xs text-muted-foreground">{offer.description || t("common.noDescription")}</div>
                   </TableCell>
                   <TableCell><StatusBadge status={offer.status} /></TableCell>
                   <TableCell>{offer.discountPercent}%</TableCell>
@@ -205,7 +207,7 @@ function OffersPage() {
                   <TableCell className="font-semibold">{formatCurrency(revenue, currency)}</TableCell>
                   <TableCell>
                     <span className={health === "Going well" ? "font-semibold text-emerald-700" : health === "Needs push" ? "font-semibold text-amber-700" : "font-semibold text-rose-700"}>
-                      {health}
+                      {t(`health.${health}`)}
                     </span>
                   </TableCell>
                   <TableCell className="text-right">
@@ -216,7 +218,7 @@ function OffersPage() {
               ))}
               {!isLoading && offers.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">No offers yet</TableCell>
+                  <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">{t("offers.noOffers")}</TableCell>
                 </TableRow>
               )}
             </TableBody>
@@ -227,45 +229,45 @@ function OffersPage() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>{editing ? "Edit offer" : "Create offer"}</DialogTitle>
-            <DialogDescription>Use targets to judge whether an offer is performing well.</DialogDescription>
+            <DialogTitle>{editing ? t("offers.editTitle") : t("offers.createTitle")}</DialogTitle>
+            <DialogDescription>{t("offers.dialogDescription")}</DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Offer name" error={errors.name}>
+            <Field label={t("offers.name")} error={errors.name}>
               <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
             </Field>
-            <Field label="Status">
+            <Field label={t("common.status")}>
               <Select value={form.status} onValueChange={(value) => setForm({ ...form, status: value as OfferStatus })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Active">Active</SelectItem>
-                  <SelectItem value="Paused">Paused</SelectItem>
-                  <SelectItem value="Ended">Ended</SelectItem>
+                  <SelectItem value="Active">{t("status.Active")}</SelectItem>
+                  <SelectItem value="Paused">{t("status.Paused")}</SelectItem>
+                  <SelectItem value="Ended">{t("status.Ended")}</SelectItem>
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="Discount %" error={errors.discountPercent}>
+            <Field label={t("offers.discountPercent")} error={errors.discountPercent}>
               <Input type="number" min={0} max={100} value={form.discountPercent} onChange={(e) => setForm({ ...form, discountPercent: Number(e.target.value) })} />
             </Field>
-            <Field label="Target subscriptions" error={errors.targetSubscriptions}>
+            <Field label={t("offers.targetSubscriptions")} error={errors.targetSubscriptions}>
               <Input type="number" min={0} value={form.targetSubscriptions} onChange={(e) => setForm({ ...form, targetSubscriptions: Number(e.target.value) })} />
             </Field>
-            <Field label="Start date" error={errors.startDate}>
+            <Field label={t("offers.startDate")} error={errors.startDate}>
               <Input type="date" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} />
             </Field>
-            <Field label="End date">
+            <Field label={t("offers.endDate")}>
               <Input type="date" value={form.endDate ?? ""} onChange={(e) => setForm({ ...form, endDate: e.target.value || null })} />
             </Field>
             <div className="sm:col-span-2">
-              <Field label="Description">
+              <Field label={t("common.description")}>
                 <Textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
               </Field>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>{t("common.cancel")}</Button>
             <Button onClick={submit} disabled={createOffer.isPending || updateOffer.isPending} className="bg-gradient-brand-strong text-white">
-              {createOffer.isPending || updateOffer.isPending ? "Saving..." : editing ? "Save changes" : "Create offer"}
+              {createOffer.isPending || updateOffer.isPending ? t("common.saving") : editing ? t("common.saveChanges") : t("offers.createTitle")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -274,15 +276,15 @@ function OffersPage() {
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete this offer?</AlertDialogTitle>
+            <AlertDialogTitle>{t("offers.deleteTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Clients assigned to this offer will keep their subscription, but the offer tag will be removed.
+              {t("offers.deleteDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelete} disabled={deleteOffer.isPending} className="bg-rose-600 text-white hover:bg-rose-700">
-              {deleteOffer.isPending ? "Deleting..." : "Delete"}
+              {deleteOffer.isPending ? t("common.deleting") : t("common.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

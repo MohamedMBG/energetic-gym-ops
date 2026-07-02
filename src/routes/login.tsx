@@ -7,12 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
 });
 
 function LoginPage() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [email, setEmail] = useState("");
@@ -36,8 +38,8 @@ function LoginPage() {
           <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-brand text-xl font-extrabold text-white">
             7
           </div>
-          <h1 className="mt-4 text-2xl font-bold">Sign in</h1>
-          <p className="mt-1 text-sm text-muted-foreground">7up Gym Management</p>
+          <h1 className="mt-4 text-2xl font-bold">{t("login.signIn")}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{t("login.subtitle")}</p>
         </div>
 
         <form
@@ -48,7 +50,7 @@ function LoginPage() {
           }}
         >
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-muted-foreground">Email</Label>
+            <Label className="text-xs font-semibold text-muted-foreground">{t("common.email")}</Label>
             <Input
               type="email"
               value={email}
@@ -59,7 +61,7 @@ function LoginPage() {
             />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-muted-foreground">Password</Label>
+            <Label className="text-xs font-semibold text-muted-foreground">{t("common.password")}</Label>
             <Input
               type="password"
               value={password}
@@ -73,14 +75,14 @@ function LoginPage() {
             className="w-full bg-gradient-brand-strong text-white"
             disabled={login.isPending}
           >
-            {login.isPending ? "Signing in…" : "Sign in"}
+            {login.isPending ? t("login.signingIn") : t("login.signIn")}
           </Button>
         </form>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
-          First time?{" "}
+          {t("login.firstTime")}{" "}
           <a href="/setup" className="text-primary hover:underline">
-            Set up your gym
+            {t("login.setupGym")}
           </a>
         </p>
       </Card>

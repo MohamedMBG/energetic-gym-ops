@@ -7,12 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/setup")({
   component: SetupPage,
 });
 
 function SetupPage() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [form, setForm] = useState({ gymName: "", email: "", password: "" });
@@ -21,7 +23,7 @@ function SetupPage() {
     mutationFn: () => api.post("/api/auth/setup", form),
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ["auth", "me"] });
-      toast.success("Setup complete. Welcome!");
+      toast.success(t("setup.complete"));
       navigate({ to: "/" });
     },
     onError: (err: Error) => {
@@ -36,9 +38,9 @@ function SetupPage() {
           <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-brand text-xl font-extrabold text-white">
             7
           </div>
-          <h1 className="mt-4 text-2xl font-bold">Set up your gym</h1>
+          <h1 className="mt-4 text-2xl font-bold">{t("setup.title")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Create your owner account to get started.
+            {t("setup.description")}
           </p>
         </div>
 
@@ -50,7 +52,7 @@ function SetupPage() {
           }}
         >
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-muted-foreground">Gym name</Label>
+            <Label className="text-xs font-semibold text-muted-foreground">{t("settings.gymName")}</Label>
             <Input
               value={form.gymName}
               onChange={(e) => setForm({ ...form, gymName: e.target.value })}
@@ -59,7 +61,7 @@ function SetupPage() {
             />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-muted-foreground">Email</Label>
+            <Label className="text-xs font-semibold text-muted-foreground">{t("common.email")}</Label>
             <Input
               type="email"
               value={form.email}
@@ -70,7 +72,7 @@ function SetupPage() {
             />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-muted-foreground">Password</Label>
+            <Label className="text-xs font-semibold text-muted-foreground">{t("common.password")}</Label>
             <Input
               type="password"
               value={form.password}
@@ -79,21 +81,21 @@ function SetupPage() {
               required
               autoComplete="new-password"
             />
-            <p className="text-xs text-muted-foreground">At least 8 characters</p>
+            <p className="text-xs text-muted-foreground">{t("setup.minPassword")}</p>
           </div>
           <Button
             type="submit"
             className="w-full bg-gradient-brand-strong text-white"
             disabled={setup.isPending}
           >
-            {setup.isPending ? "Creating…" : "Create account"}
+            {setup.isPending ? t("setup.creating") : t("setup.createAccount")}
           </Button>
         </form>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
-          Already have an account?{" "}
+          {t("setup.alreadyHaveAccount")}{" "}
           <a href="/login" className="text-primary hover:underline">
-            Sign in
+            {t("login.signIn")}
           </a>
         </p>
       </Card>

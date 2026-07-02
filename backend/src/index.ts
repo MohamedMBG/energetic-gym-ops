@@ -14,6 +14,7 @@ import settingsRoutes from './routes/settings';
 import offerRoutes from './routes/offers';
 import packRoutes from './routes/packs';
 import equipmentRoutes from './routes/equipment';
+import healthRoutes from './routes/health';
 import { ensureAdminAccount } from './lib/admin-bootstrap';
 
 const app = express();
@@ -50,6 +51,8 @@ if (process.env.NODE_ENV !== 'production') {
   app.use(morgan('dev'));
 }
 
+app.use('/health', healthRoutes);
+app.use('/api/health', healthRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/clients', clientRoutes);
 app.use('/api/payments', paymentRoutes);
@@ -57,10 +60,6 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/offers', offerRoutes);
 app.use('/api/packs', packRoutes);
 app.use('/api/equipment', equipmentRoutes);
-
-app.get('/health', (_req, res) => {
-  res.json({ data: { ok: true } });
-});
 
 // Global error handler — handles AppError (typed HTTP errors) and unexpected crashes.
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

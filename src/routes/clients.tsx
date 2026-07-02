@@ -238,10 +238,10 @@ function ClientsPage() {
         <div className="flex flex-col gap-3 md:flex-row md:items-center">
           <div className="relative flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search by name, email or phone…" className="h-10 rounded-xl pl-9" />
+            <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("clients.searchPlaceholder")} className="h-10 rounded-xl pl-9" />
           </div>
           <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="h-10 w-full rounded-xl md:w-44"><SelectValue placeholder="Type" /></SelectTrigger>
+            <SelectTrigger className="h-10 w-full rounded-xl md:w-44"><SelectValue placeholder={t("common.plan")} /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("clients.allTypes")}</SelectItem>
               {typeOptions.map((type) => (
@@ -250,7 +250,7 @@ function ClientsPage() {
             </SelectContent>
           </Select>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="h-10 w-full rounded-xl md:w-44"><SelectValue placeholder="Status" /></SelectTrigger>
+            <SelectTrigger className="h-10 w-full rounded-xl md:w-44"><SelectValue placeholder={t("common.status")} /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("clients.allStatuses")}</SelectItem>
               <SelectItem value="Active">{t("status.Active")}</SelectItem>
@@ -297,7 +297,7 @@ function ClientsPage() {
                         </div>
                         <div>
                           <div className="font-semibold">{c.fullName}</div>
-                          <div className="text-xs text-muted-foreground">{c.gender} · joined {new Date(c.joinDate).toLocaleDateString()}</div>
+                          <div className="text-xs text-muted-foreground">{t(c.gender === "Female" ? "clients.female" : "clients.male")} - {t("clients.joinDate")} {new Date(c.joinDate).toLocaleDateString()}</div>
                         </div>
                       </div>
                     </TableCell>
@@ -399,12 +399,12 @@ function ClientsPage() {
                   });
                 }}
               >
-                <SelectTrigger><SelectValue placeholder="Select pack" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t("clients.selectPack")} /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="custom">{t("clients.customPack")}</SelectItem>
                   {activePacks.map((pack) => (
                     <SelectItem key={pack.id} value={pack.id}>
-                      {pack.name} · {pack.durationMonths} month{pack.durationMonths === 1 ? "" : "s"} · {formatCurrency(pack.price, currency)}
+                      {pack.name} - {pack.durationMonths} {pack.durationMonths === 1 ? t("common.month") : t("common.months")} - {formatCurrency(pack.price, currency)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -421,12 +421,12 @@ function ClientsPage() {
             </Field>
             <Field label={t("clients.offer")}>
               <Select value={form.offerId ?? "none"} onValueChange={(v) => setForm({ ...form, offerId: v === "none" ? null : v })}>
-                <SelectTrigger><SelectValue placeholder="No offer" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t("common.noOffer")} /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">{t("common.noOffer")}</SelectItem>
                   {offers.map((offer) => (
                     <SelectItem key={offer.id} value={offer.id}>
-                      {offer.name} ({offer.discountPercent}% off)
+                      {offer.name} ({offer.discountPercent}%)
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -488,7 +488,7 @@ function ClientsPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>{t("common.cancel")}</Button>
             <Button onClick={submit} disabled={isPending} className="bg-gradient-brand-strong text-white">
-              {isPending ? "Saving…" : editing ? "Save changes" : "Add client"}
+              {isPending ? t("common.saving") : editing ? t("common.saveChanges") : t("clients.add")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -505,7 +505,7 @@ function ClientsPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelete} disabled={deleteClient.isPending} className="bg-rose-600 text-white hover:bg-rose-700">
-              {deleteClient.isPending ? "Deleting…" : "Delete"}
+              {deleteClient.isPending ? t("common.deleting") : t("common.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

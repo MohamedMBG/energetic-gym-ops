@@ -82,15 +82,15 @@ function SettingsPage() {
         </div>
         <div className="mt-6 flex justify-end">
           <Button onClick={save} disabled={updateSettings.isPending} className="bg-gradient-brand-strong text-white">
-            {updateSettings.isPending ? "Saving…" : "Save changes"}
+            {updateSettings.isPending ? t("common.saving") : t("common.saveChanges")}
           </Button>
         </div>
       </Card>
 
       <Card className="rounded-2xl border-0 p-6 shadow-soft">
-        <h2 className="text-lg font-bold">Danger zone</h2>
+        <h2 className="text-lg font-bold">{t("settings.dangerZone")}</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Sign out of your account.
+          {t("settings.signOutDescription")}
         </p>
         <Button
           variant="outline"
@@ -100,7 +100,7 @@ function SettingsPage() {
             window.location.href = "/login";
           }}
         >
-          Sign out
+          {t("app.signOut")}
         </Button>
       </Card>
     </div>

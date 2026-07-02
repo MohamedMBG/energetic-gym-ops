@@ -17,6 +17,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateEquipment, useDeleteEquipment, useEquipment, useUpdateEquipment } from "@/hooks/use-equipment";
 import { useSettings } from "@/hooks/use-settings";
+import { useI18n } from "@/lib/i18n";
 import { formatCurrency } from "@/lib/storage";
 import type { Equipment, EquipmentStatus } from "@/lib/types";
 
@@ -51,6 +52,7 @@ const empty = (): FormState => ({
 });
 
 function EquipmentPage() {
+  const { t } = useI18n();
   const { data: equipment = [], isLoading } = useEquipment();
   const { data: settings } = useSettings();
   const createEquipment = useCreateEquipment();
@@ -125,7 +127,7 @@ function EquipmentPage() {
 
     mutation({
       onSuccess: () => {
-        toast.success(editing ? "Equipment updated" : "Equipment added");
+        toast.success(editing ? t("equipment.updated") : t("equipment.added"));
         setDialogOpen(false);
       },
       onError: (err) => toast.error(err.message),
@@ -136,7 +138,7 @@ function EquipmentPage() {
     if (!deleteId) return;
     deleteEquipment.mutate(deleteId, {
       onSuccess: () => {
-        toast.success("Equipment deleted");
+        toast.success(t("equipment.deleted"));
         setDeleteId(null);
       },
       onError: (err) => toast.error(err.message),
@@ -146,41 +148,41 @@ function EquipmentPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Equipment"
-        description="Track machines, maintenance dates, repair costs, and supplier contacts."
+        title={t("equipment.title")}
+        description={t("equipment.description")}
         actions={
           <Button onClick={openAdd} className="bg-gradient-brand-strong text-white shadow-soft hover:opacity-90">
-            <Plus className="mr-2 h-4 w-4" /> Add equipment
+            <Plus className="mr-2 h-4 w-4" /> {t("equipment.add")}
           </Button>
         }
       />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Total equipment" value={equipment.length} icon={Dumbbell} variant="brand" />
-        <StatCard label="Due soon" value={stats.dueSoon} icon={Wrench} hint="Next maintenance within 14 days" />
-        <StatCard label="Out of service" value={stats.outOfService} icon={AlertTriangle} variant="warning" />
-        <StatCard label="Repair costs" value={formatCurrency(stats.repairCost, currency)} icon={Wrench} hint="Total tracked expenses" />
+        <StatCard label={t("equipment.total")} value={equipment.length} icon={Dumbbell} variant="brand" />
+        <StatCard label={t("equipment.dueSoon")} value={stats.dueSoon} icon={Wrench} hint={t("equipment.nextMaintenance14")} />
+        <StatCard label={t("equipment.outOfService")} value={stats.outOfService} icon={AlertTriangle} variant="warning" />
+        <StatCard label={t("equipment.repairCosts")} value={formatCurrency(stats.repairCost, currency)} icon={Wrench} hint={t("equipment.totalTrackedExpenses")} />
       </div>
 
       <Card className="rounded-2xl border-0 p-5 shadow-soft">
-        <h2 className="mb-4 text-lg font-bold">Equipment list</h2>
+        <h2 className="mb-4 text-lg font-bold">{t("equipment.list")}</h2>
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Equipment</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Last maintenance</TableHead>
-                <TableHead>Next maintenance</TableHead>
-                <TableHead>Repair cost</TableHead>
-                <TableHead>Supplier</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>{t("equipment.item")}</TableHead>
+                <TableHead>{t("common.status")}</TableHead>
+                <TableHead>{t("equipment.lastMaintenance")}</TableHead>
+                <TableHead>{t("equipment.nextMaintenance")}</TableHead>
+                <TableHead>{t("equipment.repairCost")}</TableHead>
+                <TableHead>{t("equipment.supplier")}</TableHead>
+                <TableHead className="text-right">{t("common.actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading && (
                 <TableRow>
-                  <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">Loading...</TableCell>
+                  <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">{t("common.loading")}</TableCell>
                 </TableRow>
               )}
               {equipment.map((item) => {
@@ -214,7 +216,7 @@ function EquipmentPage() {
               })}
               {!isLoading && equipment.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">No equipment yet</TableCell>
+                  <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">{t("equipment.noEquipment")}</TableCell>
                 </TableRow>
               )}
             </TableBody>
@@ -225,51 +227,51 @@ function EquipmentPage() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>{editing ? "Edit equipment" : "Add equipment"}</DialogTitle>
-            <DialogDescription>Keep maintenance and supplier details visible before machines stay broken too long.</DialogDescription>
+            <DialogTitle>{editing ? t("equipment.editTitle") : t("equipment.addTitle")}</DialogTitle>
+            <DialogDescription>{t("equipment.dialogDescription")}</DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Equipment name" error={errors.name}>
+            <Field label={t("equipment.name")} error={errors.name}>
               <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
             </Field>
-            <Field label="Category" error={errors.category}>
-              <Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="Treadmill, bike, weights" />
+            <Field label={t("equipment.category")} error={errors.category}>
+              <Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder={t("equipment.categoryPlaceholder")} />
             </Field>
-            <Field label="Status">
+            <Field label={t("common.status")}>
               <Select value={form.status} onValueChange={(value) => setForm({ ...form, status: value as EquipmentStatus })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Operational">Operational</SelectItem>
-                  <SelectItem value="Maintenance">Maintenance</SelectItem>
-                  <SelectItem value="Out of service">Out of service</SelectItem>
+                  <SelectItem value="Operational">{t("status.Operational")}</SelectItem>
+                  <SelectItem value="Maintenance">{t("status.Maintenance")}</SelectItem>
+                  <SelectItem value="Out of service">{t("status.Out of service")}</SelectItem>
                 </SelectContent>
               </Select>
             </Field>
-            <Field label={`Repair cost (${currency})`} error={errors.repairCost}>
+            <Field label={`${t("equipment.repairCost")} (${currency})`} error={errors.repairCost}>
               <Input type="number" min={0} value={form.repairCost} onChange={(e) => setForm({ ...form, repairCost: Number(e.target.value) })} />
             </Field>
-            <Field label="Last maintenance">
+            <Field label={t("equipment.lastMaintenance")}>
               <Input type="date" value={form.lastMaintenanceDate ?? ""} onChange={(e) => setForm({ ...form, lastMaintenanceDate: e.target.value || null })} />
             </Field>
-            <Field label="Next maintenance">
+            <Field label={t("equipment.nextMaintenance")}>
               <Input type="date" value={form.nextMaintenanceDate ?? ""} onChange={(e) => setForm({ ...form, nextMaintenanceDate: e.target.value || null })} />
             </Field>
-            <Field label="Supplier name">
+            <Field label={t("equipment.supplierName")}>
               <Input value={form.supplierName} onChange={(e) => setForm({ ...form, supplierName: e.target.value })} />
             </Field>
-            <Field label="Supplier phone">
+            <Field label={t("equipment.supplierPhone")}>
               <Input value={form.supplierPhone} onChange={(e) => setForm({ ...form, supplierPhone: e.target.value })} />
             </Field>
             <div className="sm:col-span-2">
-              <Field label="Notes">
+              <Field label={t("clients.notes")}>
                 <Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
               </Field>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>{t("common.cancel")}</Button>
             <Button onClick={submit} disabled={createEquipment.isPending || updateEquipment.isPending} className="bg-gradient-brand-strong text-white">
-              {createEquipment.isPending || updateEquipment.isPending ? "Saving..." : editing ? "Save changes" : "Add equipment"}
+              {createEquipment.isPending || updateEquipment.isPending ? t("common.saving") : editing ? t("common.saveChanges") : t("equipment.add")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -278,15 +280,15 @@ function EquipmentPage() {
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete this equipment?</AlertDialogTitle>
+            <AlertDialogTitle>{t("equipment.deleteTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This removes the equipment record and its maintenance details.
+              {t("equipment.deleteDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelete} disabled={deleteEquipment.isPending} className="bg-rose-600 text-white hover:bg-rose-700">
-              {deleteEquipment.isPending ? "Deleting..." : "Delete"}
+              {deleteEquipment.isPending ? t("common.deleting") : t("common.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

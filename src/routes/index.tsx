@@ -16,12 +16,14 @@ import { useClients } from "@/hooks/use-clients";
 import { usePayments } from "@/hooks/use-payments";
 import { useSettings } from "@/hooks/use-settings";
 import { useOffers } from "@/hooks/use-offers";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/")({
   component: Dashboard,
 });
 
 function Dashboard() {
+  const { locale, t } = useI18n();
   const { data: clients = [] } = useClients();
   const { data: payments = [] } = usePayments();
   const { data: settings } = useSettings();
@@ -53,7 +55,7 @@ function Dashboard() {
     const out: { month: string; earnings: number }[] = [];
     for (let i = 5; i >= 0; i--) {
       const d = new Date(thisYear, thisMonth - i, 1);
-      const label = d.toLocaleString("en", { month: "short" });
+      const label = d.toLocaleString(locale, { month: "short" });
       const total = payments
         .filter((p) => {
           const pd = new Date(p.date);
@@ -63,7 +65,7 @@ function Dashboard() {
       out.push({ month: label, earnings: total });
     }
     return out;
-  }, [payments, thisMonth, thisYear]);
+  }, [locale, payments, thisMonth, thisYear]);
 
   const offerStats = useMemo(() => {
     return offers
@@ -97,42 +99,42 @@ function Dashboard() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Welcome back 👋"
-        description="Here's what's happening at your gym today."
+        title={t("dashboard.title")}
+        description={t("dashboard.description")}
       />
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <QuickAction to="/clients" icon={UserPlus} label="Add new client" hint="Register a member" />
-        <QuickAction to="/offers" icon={BadgePercent} label="Create offer" hint="Launch a campaign" />
-        <QuickAction to="/payments" icon={CreditCard} label="Record payment" hint="Log a transaction" />
-        <QuickAction to="/reminders" icon={Send} label="Send reminders" hint={`${expiringSoon} due soon`} highlight={expiringSoon > 0} />
+        <QuickAction to="/clients" icon={UserPlus} label={t("dashboard.addNewClient")} hint={t("dashboard.registerMember")} />
+        <QuickAction to="/offers" icon={BadgePercent} label={t("dashboard.createOffer")} hint={t("dashboard.launchCampaign")} />
+        <QuickAction to="/payments" icon={CreditCard} label={t("dashboard.recordPayment")} hint={t("dashboard.logTransaction")} />
+        <QuickAction to="/reminders" icon={Send} label={t("dashboard.sendReminders")} hint={`${expiringSoon} ${t("dashboard.dueSoon")}`} highlight={expiringSoon > 0} />
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Active clients" value={active} icon={Users} variant="brand" hint="Currently subscribed" />
-        <StatCard label="Monthly subs" value={monthly} icon={CalendarDays} hint="1-month packs" />
-        <StatCard label="3-month packs" value={threeMonth} icon={CalendarRange} hint="Quarterly commitments" />
-        <StatCard label="6-month packs" value={sixMonth} icon={CalendarRange} hint="Medium-term commitments" />
-        <StatCard label="Yearly packs" value={yearly} icon={CalendarRange} hint="12-month subscriptions" />
+        <StatCard label={t("dashboard.activeClients")} value={active} icon={Users} variant="brand" hint={t("dashboard.currentlySubscribed")} />
+        <StatCard label={t("dashboard.monthlySubs")} value={monthly} icon={CalendarDays} hint={t("dashboard.oneMonthPacks")} />
+        <StatCard label={t("dashboard.threeMonthPacks")} value={threeMonth} icon={CalendarRange} hint={t("dashboard.quarterlyCommitments")} />
+        <StatCard label={t("dashboard.sixMonthPacks")} value={sixMonth} icon={CalendarRange} hint={t("dashboard.mediumTermCommitments")} />
+        <StatCard label={t("dashboard.yearlyPacks")} value={yearly} icon={CalendarRange} hint={t("dashboard.twelveMonthSubscriptions")} />
         <StatCard
-          label="Earnings this month"
+          label={t("dashboard.earningsThisMonth")}
           value={formatCurrency(earningsThisMonth, currency)}
           icon={DollarSign}
           variant="brand"
-          hint={now.toLocaleString("en", { month: "long", year: "numeric" })}
+          hint={now.toLocaleString(locale, { month: "long", year: "numeric" })}
         />
-        <StatCard label="Unpaid clients" value={unpaid} icon={AlertTriangle} variant="danger" hint="Need follow-up" />
-        <StatCard label="Expiring soon" value={expiringSoon} icon={Clock} variant="warning" hint="Within 5 days" />
-        <StatCard label="Active offers" value={activeOffers} icon={BadgePercent} variant="brand" hint={`${offerClients.length} offer subscribers`} />
-        <StatCard label="Offer adoption" value={`${offerClientRate}%`} icon={TrendingUp} variant="warning" hint="Members from campaigns" />
+        <StatCard label={t("dashboard.unpaidClients")} value={unpaid} icon={AlertTriangle} variant="danger" hint={t("dashboard.needFollowUp")} />
+        <StatCard label={t("dashboard.expiringSoon")} value={expiringSoon} icon={Clock} variant="warning" hint={t("dashboard.withinFiveDays")} />
+        <StatCard label={t("dashboard.activeOffers")} value={activeOffers} icon={BadgePercent} variant="brand" hint={`${offerClients.length} ${t("dashboard.offerSubscribers")}`} />
+        <StatCard label={t("dashboard.offerAdoption")} value={`${offerClientRate}%`} icon={TrendingUp} variant="warning" hint={t("dashboard.membersFromCampaigns")} />
       </div>
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         <Card className="rounded-2xl border-0 p-5 shadow-soft xl:col-span-2">
           <div className="mb-4 flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-bold">Earnings trend</h2>
-              <p className="text-xs text-muted-foreground">Last 6 months</p>
+              <h2 className="text-lg font-bold">{t("dashboard.earningsTrend")}</h2>
+              <p className="text-xs text-muted-foreground">{t("dashboard.lastSixMonths")}</p>
             </div>
           </div>
           <div className="h-64 w-full">
@@ -158,24 +160,24 @@ function Dashboard() {
         </Card>
 
         <Card className="rounded-2xl border-0 bg-gradient-brand-strong p-6 text-white shadow-glow">
-          <h3 className="text-sm font-semibold uppercase tracking-wider opacity-80">Total revenue</h3>
+          <h3 className="text-sm font-semibold uppercase tracking-wider opacity-80">{t("dashboard.totalRevenue")}</h3>
           <div className="mt-2 text-4xl font-extrabold">
             {formatCurrency(payments.filter((p) => p.status === "Paid").reduce((s, p) => s + p.amount, 0), currency)}
           </div>
-          <p className="mt-1 text-sm opacity-80">All-time earnings collected</p>
+          <p className="mt-1 text-sm opacity-80">{t("dashboard.allTimeEarnings")}</p>
           <div className="mt-6 space-y-3">
             <div className="flex items-center justify-between rounded-xl bg-white/10 px-3 py-2.5">
-              <span className="text-sm">Avg. monthly revenue</span>
+              <span className="text-sm">{t("dashboard.avgMonthlyRevenue")}</span>
               <span className="font-bold">
                 {formatCurrency(monthsData.reduce((s, m) => s + m.earnings, 0) / Math.max(monthsData.length, 1), currency)}
               </span>
             </div>
             <div className="flex items-center justify-between rounded-xl bg-white/10 px-3 py-2.5">
-              <span className="text-sm">Total members</span>
+              <span className="text-sm">{t("dashboard.totalMembers")}</span>
               <span className="font-bold">{clients.length}</span>
             </div>
             <div className="flex items-center justify-between rounded-xl bg-white/10 px-3 py-2.5">
-              <span className="text-sm">Retention rate</span>
+              <span className="text-sm">{t("dashboard.retentionRate")}</span>
               <span className="font-bold">
                 {clients.length ? Math.round((active / clients.length) * 100) : 0}%
               </span>
@@ -187,22 +189,22 @@ function Dashboard() {
       <Card className="rounded-2xl border-0 p-5 shadow-soft">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg font-bold">Offer business analytics</h2>
-            <p className="text-xs text-muted-foreground">Which campaigns are bringing subscribers and revenue.</p>
+            <h2 className="text-lg font-bold">{t("dashboard.offerAnalytics")}</h2>
+            <p className="text-xs text-muted-foreground">{t("dashboard.offerAnalyticsDescription")}</p>
           </div>
           <div className="rounded-xl bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700">
-            {formatCurrency(offerRevenue, currency)} tracked offer revenue
+            {formatCurrency(offerRevenue, currency)} {t("dashboard.trackedOfferRevenue")}
           </div>
         </div>
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Offer</TableHead>
-                <TableHead>Subscribers</TableHead>
-                <TableHead>Progress</TableHead>
-                <TableHead>Health</TableHead>
-                <TableHead className="text-right">Revenue</TableHead>
+                <TableHead>{t("common.offer")}</TableHead>
+                <TableHead>{t("common.subscribers")}</TableHead>
+                <TableHead>{t("common.progress")}</TableHead>
+                <TableHead>{t("common.health")}</TableHead>
+                <TableHead className="text-right">{t("common.revenue")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -210,7 +212,7 @@ function Dashboard() {
                 <TableRow key={offer.id}>
                   <TableCell>
                     <div className="font-semibold">{offer.name}</div>
-                    <div className="text-xs text-muted-foreground">{offer.discountPercent}% discount · {offer.status}</div>
+                    <div className="text-xs text-muted-foreground">{offer.discountPercent}% {t("common.discount").toLowerCase()} - {t(`status.${offer.status}`, offer.status)}</div>
                   </TableCell>
                   <TableCell className="font-semibold">{subscribers}</TableCell>
                   <TableCell>
@@ -218,12 +220,12 @@ function Dashboard() {
                       <div className="h-2 w-28 overflow-hidden rounded-full bg-muted">
                         <div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(progress, 100)}%` }} />
                       </div>
-                      <span className="text-xs font-semibold">{offer.targetSubscriptions ? `${progress}%` : "No target"}</span>
+                      <span className="text-xs font-semibold">{offer.targetSubscriptions ? `${progress}%` : t("dashboard.noTarget")}</span>
                     </div>
                   </TableCell>
                   <TableCell>
                     <span className={health === "Going well" ? "font-semibold text-emerald-700" : health === "Needs push" ? "font-semibold text-amber-700" : "font-semibold text-rose-700"}>
-                      {health}
+                      {t(`health.${health}`)}
                     </span>
                   </TableCell>
                   <TableCell className="text-right font-bold">{formatCurrency(revenue, currency)}</TableCell>
@@ -232,7 +234,7 @@ function Dashboard() {
               {offerStats.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
-                    No offer data yet. Create an offer and assign clients to it.
+                    {t("dashboard.noOfferData")}
                   </TableCell>
                 </TableRow>
               )}
@@ -241,25 +243,25 @@ function Dashboard() {
         </div>
         {bestOffer && (
           <div className="mt-4 rounded-xl bg-muted/60 px-4 py-3 text-sm">
-            Best campaign: <span className="font-bold">{bestOffer.offer.name}</span> with <span className="font-bold">{bestOffer.subscribers}</span> subscriber{bestOffer.subscribers === 1 ? "" : "s"}.
+            {t("dashboard.bestCampaign")}: <span className="font-bold">{bestOffer.offer.name}</span> {t("dashboard.with")} <span className="font-bold">{bestOffer.subscribers}</span> {t(bestOffer.subscribers === 1 ? "dashboard.subscriber" : "dashboard.subscribersPlural")}.
           </div>
         )}
       </Card>
 
       <Card className="rounded-2xl border-0 p-5 shadow-soft">
         <div className="mb-4">
-          <h2 className="text-lg font-bold">Recent payments</h2>
-          <p className="text-xs text-muted-foreground">Latest transactions across your gym</p>
+          <h2 className="text-lg font-bold">{t("dashboard.recentPayments")}</h2>
+          <p className="text-xs text-muted-foreground">{t("dashboard.latestTransactions")}</p>
         </div>
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Client</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Method</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
+                <TableHead>{t("common.client")}</TableHead>
+                <TableHead>{t("common.date")}</TableHead>
+                <TableHead>{t("common.method")}</TableHead>
+                <TableHead>{t("common.status")}</TableHead>
+                <TableHead className="text-right">{t("common.amount")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -269,7 +271,7 @@ function Dashboard() {
                   <TableRow key={p.id}>
                     <TableCell className="font-medium">{client?.fullName ?? p.clientName ?? "—"}</TableCell>
                     <TableCell>{new Date(p.date).toLocaleDateString()}</TableCell>
-                    <TableCell>{p.method}</TableCell>
+                    <TableCell>{t(`status.${p.method}`, p.method)}</TableCell>
                     <TableCell><StatusBadge status={p.status} /></TableCell>
                     <TableCell className="text-right font-bold">
                       {formatCurrency(p.amount, currency)}
@@ -279,7 +281,7 @@ function Dashboard() {
               })}
               {recent.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">No payments yet</TableCell>
+                  <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">{t("payments.noPayments")}</TableCell>
                 </TableRow>
               )}
             </TableBody>

@@ -134,7 +134,7 @@ function PaymentsPage() {
             <TableBody>
               {isLoading && (
                 <TableRow>
-                  <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">Loading…</TableCell>
+                  <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">{t("common.loading")}</TableCell>
                 </TableRow>
               )}
               {sorted.map((p) => (
@@ -217,7 +217,7 @@ function PaymentsPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>{t("common.cancel")}</Button>
             <Button onClick={submit} disabled={createPayment.isPending} className="bg-gradient-brand-strong text-white">
-              {createPayment.isPending ? "Saving…" : "Save payment"}
+              {createPayment.isPending ? t("common.saving") : t("payments.save")}
             </Button>
           </DialogFooter>
         </DialogContent>
