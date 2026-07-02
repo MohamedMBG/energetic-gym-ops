@@ -12,7 +12,9 @@ declare global {
 }
 
 export function requireAuth(req: Request, res: Response, next: NextFunction): void {
-  const token = req.cookies?.gym_ops_token as string | undefined;
+  const authHeader = req.get('authorization');
+  const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice('Bearer '.length) : undefined;
+  const token = bearerToken || (req.cookies?.gym_ops_token as string | undefined);
 
   if (!token) {
     unauthorized(res);

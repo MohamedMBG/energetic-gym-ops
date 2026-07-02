@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { api } from "@/lib/api";
+import { api, setAuthToken } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,8 +21,9 @@ function LoginPage() {
   const [password, setPassword] = useState("");
 
   const login = useMutation({
-    mutationFn: () => api.post("/api/auth/login", { email, password }),
-    onSuccess: async () => {
+    mutationFn: () => api.post<{ token: string }>("/api/auth/login", { email, password }),
+    onSuccess: async ({ token }) => {
+      setAuthToken(token);
       await qc.invalidateQueries({ queryKey: ["auth", "me"] });
       navigate({ to: "/" });
     },

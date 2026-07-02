@@ -13,7 +13,7 @@ import {
   Dumbbell,
   LogOut,
 } from "lucide-react";
-import { api } from "@/lib/api";
+import { api, clearAuthToken } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -84,6 +84,7 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
         <button
           onClick={async () => {
             await api.post("/api/auth/logout", {});
+            clearAuthToken();
             window.location.href = "/login";
           }}
           className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-sidebar-foreground transition-all hover:bg-rose-50 hover:text-rose-600"

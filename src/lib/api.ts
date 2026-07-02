@@ -24,6 +24,22 @@ function resolveBaseUrl(): string {
 }
 
 const BASE = resolveBaseUrl();
+const AUTH_TOKEN_KEY = 'gym_ops_token';
+
+export function setAuthToken(token: string): void {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(AUTH_TOKEN_KEY, token);
+}
+
+export function clearAuthToken(): void {
+  if (typeof window === 'undefined') return;
+  window.localStorage.removeItem(AUTH_TOKEN_KEY);
+}
+
+function getAuthToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  return window.localStorage.getItem(AUTH_TOKEN_KEY);
+}
 
 export class ApiError extends Error {
   constructor(
@@ -39,10 +55,15 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   let res: Response;
 
   try {
+    const token = getAuthToken();
+    const headers = new Headers();
+    if (body !== undefined) headers.set('Content-Type', 'application/json');
+    if (token) headers.set('Authorization', `Bearer ${token}`);
+
     res = await fetch(`${BASE}${path}`, {
       method,
       credentials: 'include',
-      headers: body !== undefined ? { 'Content-Type': 'application/json' } : {},
+      headers,
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
   } catch {
@@ -58,6 +79,8 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   const json = await res.json().catch(() => null);
 
   if (!res.ok) {
+    if (res.status === 401) clearAuthToken();
+
     const message =
       (json as { error?: { message?: string } } | null)?.error?.message ??
       res.statusText;

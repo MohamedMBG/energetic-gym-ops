@@ -80,7 +80,7 @@ router.post('/setup', validateBody(setupSchema), async (req, res) => {
 
   const token = signToken({ userId, gymId });
   res.cookie(COOKIE_NAME, token, cookieOptions(req));
-  ok(res, { message: 'Setup complete' }, 201);
+  ok(res, { message: 'Setup complete', token }, 201);
 });
 
 // POST /api/auth/login
@@ -102,7 +102,7 @@ router.post('/login', validateBody(loginSchema), async (req, res) => {
 
   const token = signToken({ userId: user.id, gymId: user.gymId });
   res.cookie(COOKIE_NAME, token, cookieOptions(req));
-  ok(res, { message: 'Logged in' });
+  ok(res, { message: 'Logged in', token });
 });
 
 // POST /api/auth/logout

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useSettings, useUpdateSettings } from "@/hooks/use-settings";
-import { api } from "@/lib/api";
+import { api, clearAuthToken } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import type { Settings } from "@/lib/types";
 
@@ -97,6 +97,7 @@ function SettingsPage() {
           className="mt-4 border-rose-300 text-rose-600 hover:bg-rose-50"
           onClick={async () => {
             await api.post("/api/auth/logout", {});
+            clearAuthToken();
             window.location.href = "/login";
           }}
         >
