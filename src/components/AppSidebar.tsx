@@ -14,23 +14,25 @@ import {
   LogOut,
 } from "lucide-react";
 import { api } from "@/lib/api";
+import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 const items = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/clients", label: "Clients", icon: Users },
-  { to: "/subscriptions", label: "Subscriptions", icon: CalendarClock },
-  { to: "/packs", label: "Packs", icon: Package },
-  { to: "/offers", label: "Offers", icon: BadgePercent },
-  { to: "/equipment", label: "Equipment", icon: Wrench },
-  { to: "/payments", label: "Payments", icon: CreditCard },
-  { to: "/reminders", label: "Reminders", icon: Mail },
-  { to: "/reports", label: "Reports", icon: BarChart3 },
-  { to: "/settings", label: "Settings", icon: SettingsIcon },
+  { to: "/", labelKey: "nav.dashboard", icon: LayoutDashboard },
+  { to: "/clients", labelKey: "nav.clients", icon: Users },
+  { to: "/subscriptions", labelKey: "nav.subscriptions", icon: CalendarClock },
+  { to: "/packs", labelKey: "nav.packs", icon: Package },
+  { to: "/offers", labelKey: "nav.offers", icon: BadgePercent },
+  { to: "/equipment", labelKey: "nav.equipment", icon: Wrench },
+  { to: "/payments", labelKey: "nav.payments", icon: CreditCard },
+  { to: "/reminders", labelKey: "nav.reminders", icon: Mail },
+  { to: "/reports", labelKey: "nav.reports", icon: BarChart3 },
+  { to: "/settings", labelKey: "nav.settings", icon: SettingsIcon },
 ] as const;
 
 export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { t } = useI18n();
 
   return (
     <aside className="flex h-full w-64 flex-col border-r border-sidebar-border bg-sidebar">
@@ -43,7 +45,7 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
             <span className="text-gradient-brand">7up</span> Gym
           </div>
           <div className="text-[11px] uppercase tracking-widest text-muted-foreground">
-            Admin Suite
+            {t("app.adminSuite")}
           </div>
         </div>
       </div>
@@ -65,16 +67,16 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
               )}
             >
               <Icon className={cn("h-4 w-4", active ? "text-white" : "text-primary")} />
-              {it.label}
+              {t(it.labelKey)}
             </Link>
           );
         })}
       </nav>
 
       <div className="m-3 rounded-2xl bg-gradient-brand p-4 text-white shadow-soft">
-        <div className="text-xs font-semibold uppercase tracking-wider opacity-90">Pro tip</div>
+        <div className="text-xs font-semibold uppercase tracking-wider opacity-90">{t("app.proTip")}</div>
         <p className="mt-1 text-sm leading-snug">
-          Send reminders 7 days before renewal to boost retention.
+          {t("app.proTipText")}
         </p>
       </div>
 
@@ -87,7 +89,7 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
           className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-sidebar-foreground transition-all hover:bg-rose-50 hover:text-rose-600"
         >
           <LogOut className="h-4 w-4 text-muted-foreground group-hover:text-rose-600" />
-          Sign out
+          {t("app.signOut")}
         </button>
       </div>
     </aside>

@@ -47,6 +47,10 @@ export function computeEndDate(start: string, typeOrMonths: SubscriptionType | n
   return addMonths(start, typeOrMonths === "Annual" || typeOrMonths === "Yearly" ? 12 : 1);
 }
 
+export function computeAssuranceEndDate(start: string): string {
+  return addMonths(start, 12);
+}
+
 export function getClients(): Client[] {
   ensureSeed();
   return read<Client[]>(KEYS.clients, []);
@@ -117,11 +121,16 @@ function ensureSeed() {
       email: s.email || "",
       gender: (s.gender as Client["gender"]) || "Male",
       joinDate: daysFromNow(s.startOffset - 5),
+      trainingAccess: "Gym & Bodybuilding",
       subscriptionType: s.subscriptionType,
       subscriptionPlanId: null,
       subscriptionDurationMonths: s.subscriptionType === "Annual" ? 12 : 1,
       subscriptionStart: start,
       subscriptionEnd: end,
+      assuranceFee: 200,
+      assuranceStart: start,
+      assuranceEnd: computeAssuranceEndDate(start),
+      assurancePaymentStatus: "Paid",
       offerId: null,
       paymentStatus: s.status,
       lastPaymentDate: s.status === "Unpaid" ? null : start,
@@ -177,6 +186,16 @@ export function clientStatus(c: Client): "Active" | "Expiring soon" | "Expired" 
   const diffDays = Math.ceil((end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
   if (diffDays < 0) return "Expired";
   if (diffDays <= 5) return "Expiring soon";
+  return "Active";
+}
+
+export function assuranceStatus(c: Pick<Client, "assuranceEnd" | "assurancePaymentStatus">): "Active" | "Expiring soon" | "Expired" | "Unpaid" {
+  if (c.assurancePaymentStatus === "Unpaid" || !c.assuranceEnd) return "Unpaid";
+  const today = new Date();
+  const end = new Date(c.assuranceEnd);
+  const diffDays = Math.ceil((end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  if (diffDays < 0) return "Expired";
+  if (diffDays <= 30) return "Expiring soon";
   return "Active";
 }
 

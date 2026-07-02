@@ -14,10 +14,12 @@ const router = Router();
 const COOKIE_NAME = 'gym_ops_token';
 
 function cookieOptions(): CookieOptions {
+  const isProduction = process.env.NODE_ENV === 'production';
+
   return {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   };
 }
@@ -79,7 +81,7 @@ router.post('/login', validateBody(loginSchema), async (req, res) => {
 
 // POST /api/auth/logout
 router.post('/logout', (_req, res) => {
-  res.clearCookie(COOKIE_NAME);
+  res.clearCookie(COOKIE_NAME, cookieOptions());
   ok(res, { message: 'Logged out' });
 });
 

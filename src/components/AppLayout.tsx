@@ -4,6 +4,7 @@ import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { AppSidebar } from "./AppSidebar";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { useAuth } from "@/lib/auth";
+import { useI18n } from "@/lib/i18n";
 
 const PUBLIC_PATHS = ["/login", "/setup"];
 
@@ -25,6 +26,7 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const { data: auth, isLoading, isError } = useAuth();
+  const { locale, setLocale, t } = useI18n();
 
   useEffect(() => {
     if (isError) navigate({ to: "/login" });
@@ -56,12 +58,29 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
               <Menu className="h-5 w-5" />
             </SheetTrigger>
             <SheetContent side="left" className="w-64 p-0">
-              <SheetTitle className="sr-only">Navigation</SheetTitle>
+              <SheetTitle className="sr-only">{t("app.navigation")}</SheetTitle>
               <AppSidebar onNavigate={() => setOpen(false)} />
             </SheetContent>
           </Sheet>
 
           <div className="flex-1" />
+
+          <div className="flex items-center rounded-xl border border-border bg-background p-1 text-xs font-semibold">
+            <button
+              type="button"
+              onClick={() => setLocale("en")}
+              className={`rounded-lg px-2.5 py-1.5 transition-colors ${locale === "en" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"}`}
+            >
+              EN
+            </button>
+            <button
+              type="button"
+              onClick={() => setLocale("fr")}
+              className={`rounded-lg px-2.5 py-1.5 transition-colors ${locale === "fr" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"}`}
+            >
+              FR
+            </button>
+          </div>
 
           <button className="relative rounded-xl p-2.5 text-muted-foreground hover:bg-accent">
             <Bell className="h-5 w-5" />

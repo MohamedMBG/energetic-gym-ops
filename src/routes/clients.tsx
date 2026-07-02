@@ -14,13 +14,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { clientStatus, computeEndDate, formatCurrency } from "@/lib/storage";
+import { assuranceStatus, clientStatus, computeAssuranceEndDate, computeEndDate, formatCurrency } from "@/lib/storage";
 import { useClients, useCreateClient, useUpdateClient, useDeleteClient } from "@/hooks/use-clients";
 import { useCreatePayment } from "@/hooks/use-payments";
 import { useSettings } from "@/hooks/use-settings";
 import { useOffers } from "@/hooks/use-offers";
 import { usePacks } from "@/hooks/use-packs";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 import type { Client } from "@/lib/types";
 
 export const Route = createFileRoute("/clients")({
@@ -33,10 +34,14 @@ const schema = z.object({
   email: z.string().trim().email("Invalid email").max(120),
   gender: z.enum(["Male", "Female"]),
   joinDate: z.string().min(1),
+  trainingAccess: z.enum(["Martial Arts", "Gym & Bodybuilding", "Both"]),
   subscriptionType: z.string().trim().min(2),
   subscriptionPlanId: z.string().nullable().default(null),
   subscriptionDurationMonths: z.coerce.number().int().min(1).max(36),
   subscriptionStart: z.string().min(1),
+  assuranceFee: z.coerce.number().min(0),
+  assuranceStart: z.string().nullable().default(null),
+  assurancePaymentStatus: z.enum(["Paid", "Unpaid"]),
   offerId: z.string().nullable().default(null),
   paymentStatus: z.enum(["Paid", "Unpaid", "Late"]),
   amountPaid: z.coerce.number().min(0),
@@ -44,7 +49,7 @@ const schema = z.object({
   notes: z.string().max(500).optional().default(""),
 });
 
-type FormState = Omit<Client, "id" | "subscriptionEnd" | "lastPaymentDate"> & {
+type FormState = Omit<Client, "id" | "subscriptionEnd" | "lastPaymentDate" | "assuranceEnd"> & {
   paymentMethod: "Cash" | "Card" | "Bank transfer";
 };
 
@@ -54,10 +59,14 @@ const empty = (): FormState => ({
   email: "",
   gender: "Male",
   joinDate: new Date().toISOString().slice(0, 10),
+  trainingAccess: "Gym & Bodybuilding",
   subscriptionType: "Monthly",
   subscriptionPlanId: null,
   subscriptionDurationMonths: 1,
   subscriptionStart: new Date().toISOString().slice(0, 10),
+  assuranceFee: 200,
+  assuranceStart: new Date().toISOString().slice(0, 10),
+  assurancePaymentStatus: "Paid",
   offerId: null,
   paymentStatus: "Paid",
   amountPaid: 0,
@@ -71,7 +80,21 @@ function subscriptionFlagClass(status: ReturnType<typeof clientStatus>) {
   return "border-l-4 border-l-emerald-500 bg-emerald-50/60";
 }
 
+function assuranceFlagClass(status: ReturnType<typeof assuranceStatus>) {
+  if (status === "Expired" || status === "Unpaid" || status === "Expiring soon") return "border-l-4 border-l-rose-500 bg-rose-50/70";
+  return "";
+}
+
+function inferTrainingAccess(packName: string): Client["trainingAccess"] | null {
+  const name = packName.toLowerCase();
+  if (name.includes("both") || name.includes("full access")) return "Both";
+  if (name.includes("martial")) return "Martial Arts";
+  if (name.includes("bodybuilding") || name.includes("gym")) return "Gym & Bodybuilding";
+  return null;
+}
+
 function ClientsPage() {
+  const { t } = useI18n();
   const { data: settings } = useSettings();
   const { data: offers = [] } = useOffers();
   const { data: packs = [] } = usePacks();
@@ -112,6 +135,7 @@ function ClientsPage() {
       subscriptionType: defaultPack?.name ?? "Monthly",
       subscriptionPlanId: defaultPack?.id ?? null,
       subscriptionDurationMonths: defaultPack?.durationMonths ?? 1,
+      trainingAccess: defaultPack ? inferTrainingAccess(defaultPack.name) ?? "Gym & Bodybuilding" : "Gym & Bodybuilding",
       amountPaid: defaultPack?.price ?? settings?.monthlyPrice ?? 0,
     });
     setErrors({});
@@ -126,10 +150,14 @@ function ClientsPage() {
       email: c.email,
       gender: c.gender,
       joinDate: c.joinDate,
+      trainingAccess: c.trainingAccess ?? "Gym & Bodybuilding",
       subscriptionType: c.subscriptionType,
       subscriptionPlanId: c.subscriptionPlanId ?? null,
       subscriptionDurationMonths: c.subscriptionDurationMonths ?? (c.subscriptionType === "Annual" ? 12 : 1),
       subscriptionStart: c.subscriptionStart,
+      assuranceFee: c.assuranceFee ?? 200,
+      assuranceStart: c.assuranceStart ?? c.subscriptionStart,
+      assurancePaymentStatus: c.assurancePaymentStatus ?? "Paid",
       offerId: c.offerId ?? null,
       paymentStatus: c.paymentStatus,
       amountPaid: c.amountPaid,
@@ -150,25 +178,26 @@ function ClientsPage() {
     }
     const data = result.data;
     const subscriptionEnd = computeEndDate(data.subscriptionStart, data.subscriptionDurationMonths);
+    const assuranceEnd = data.assuranceStart ? computeAssuranceEndDate(data.assuranceStart) : null;
     const lastPaymentDate = data.paymentStatus === "Paid" ? data.subscriptionStart : null;
 
     if (editing) {
       updateClient.mutate(
-        { id: editing.id, data: { ...data, notes: data.notes ?? "", subscriptionEnd, lastPaymentDate } },
+        { id: editing.id, data: { ...data, notes: data.notes ?? "", subscriptionEnd, assuranceEnd, lastPaymentDate } },
         {
-          onSuccess: () => { toast.success("Client updated"); setDialogOpen(false); },
+          onSuccess: () => { toast.success(t("clients.updated")); setDialogOpen(false); },
           onError: (err) => toast.error(err.message),
         },
       );
     } else {
       createClient.mutate(
-        { ...data, notes: data.notes ?? "", subscriptionEnd, lastPaymentDate },
+        { ...data, notes: data.notes ?? "", subscriptionEnd, assuranceEnd, lastPaymentDate },
         {
           onSuccess: (createdClient) => {
             if (data.paymentStatus === "Paid") {
               createPayment.mutate({
                 clientId: createdClient.id,
-                amount: data.amountPaid,
+                amount: data.amountPaid + (data.assurancePaymentStatus === "Paid" ? data.assuranceFee : 0),
                 date: data.subscriptionStart,
                 periodStart: data.subscriptionStart,
                 periodEnd: subscriptionEnd,
@@ -176,7 +205,7 @@ function ClientsPage() {
                 status: "Paid",
               });
             }
-            toast.success("Client added");
+            toast.success(t("clients.added"));
             setDialogOpen(false);
           },
           onError: (err) => toast.error(err.message),
@@ -188,7 +217,7 @@ function ClientsPage() {
   function confirmDelete() {
     if (!deleteId) return;
     deleteClient.mutate(deleteId, {
-      onSuccess: () => { toast.success("Client removed"); setDeleteId(null); },
+      onSuccess: () => { toast.success(t("clients.removed")); setDeleteId(null); },
       onError: (err) => toast.error(err.message),
     });
   }
@@ -196,11 +225,11 @@ function ClientsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Clients"
-        description="Manage members, subscriptions and contact details."
+        title={t("clients.title")}
+        description={t("clients.description")}
         actions={
           <Button onClick={openAdd} className="bg-gradient-brand-strong text-white shadow-soft hover:opacity-90">
-            <Plus className="mr-2 h-4 w-4" /> Add client
+            <Plus className="mr-2 h-4 w-4" /> {t("clients.add")}
           </Button>
         }
       />
@@ -214,7 +243,7 @@ function ClientsPage() {
           <Select value={typeFilter} onValueChange={setTypeFilter}>
             <SelectTrigger className="h-10 w-full rounded-xl md:w-44"><SelectValue placeholder="Type" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All types</SelectItem>
+              <SelectItem value="all">{t("clients.allTypes")}</SelectItem>
               {typeOptions.map((type) => (
                 <SelectItem key={type} value={type}>{type}</SelectItem>
               ))}
@@ -223,11 +252,11 @@ function ClientsPage() {
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="h-10 w-full rounded-xl md:w-44"><SelectValue placeholder="Status" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All statuses</SelectItem>
-              <SelectItem value="Active">Active</SelectItem>
-              <SelectItem value="Expiring soon">Expiring soon</SelectItem>
-              <SelectItem value="Expired">Expired</SelectItem>
-              <SelectItem value="Unpaid">Unpaid</SelectItem>
+              <SelectItem value="all">{t("clients.allStatuses")}</SelectItem>
+              <SelectItem value="Active">{t("status.Active")}</SelectItem>
+              <SelectItem value="Expiring soon">{t("status.Expiring soon")}</SelectItem>
+              <SelectItem value="Expired">{t("status.Expired")}</SelectItem>
+              <SelectItem value="Unpaid">{t("status.Unpaid")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -236,25 +265,31 @@ function ClientsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Client</TableHead>
-                <TableHead>Contact</TableHead>
-                <TableHead>Plan</TableHead>
-                <TableHead>End date</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Payment</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>{t("common.client")}</TableHead>
+                <TableHead>{t("clients.contact")}</TableHead>
+                <TableHead>{t("common.plan")}</TableHead>
+                <TableHead>{t("common.access")}</TableHead>
+                <TableHead>{t("clients.endDate")}</TableHead>
+                <TableHead>{t("common.assurance")}</TableHead>
+                <TableHead>{t("common.status")}</TableHead>
+                <TableHead>{t("common.payment")}</TableHead>
+                <TableHead className="text-right">{t("common.actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading && (
                 <TableRow>
-                  <TableCell colSpan={7} className="py-10 text-center text-muted-foreground">Loading…</TableCell>
+                  <TableCell colSpan={9} className="py-10 text-center text-muted-foreground">{t("common.loading")}</TableCell>
                 </TableRow>
               )}
               {filtered.map((c) => {
                 const status = clientStatus(c);
+                const assStatus = assuranceStatus({
+                  assuranceEnd: c.assuranceEnd ?? null,
+                  assurancePaymentStatus: c.assurancePaymentStatus ?? "Unpaid",
+                });
                 return (
-                  <TableRow key={c.id} className={cn("transition-colors hover:bg-muted/50", subscriptionFlagClass(status))}>
+                  <TableRow key={c.id} className={cn("transition-colors hover:bg-muted/50", subscriptionFlagClass(status), assuranceFlagClass(assStatus))}>
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-brand text-xs font-bold text-white">
@@ -271,7 +306,17 @@ function ClientsPage() {
                       <div className="text-xs text-muted-foreground">{c.phone}</div>
                     </TableCell>
                     <TableCell><StatusBadge status={c.subscriptionType} /></TableCell>
+                    <TableCell><StatusBadge status={c.trainingAccess ?? "Gym & Bodybuilding"} /></TableCell>
                     <TableCell>{new Date(c.subscriptionEnd).toLocaleDateString()}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-col gap-1">
+                        <StatusBadge status={assStatus} />
+                        <span className="text-xs text-muted-foreground">
+                          {formatCurrency(c.assuranceFee ?? 200, currency)} {t("common.yearly")}
+                          {c.assuranceEnd ? ` - ${t("common.ends")} ${new Date(c.assuranceEnd).toLocaleDateString()}` : ""}
+                        </span>
+                      </div>
+                    </TableCell>
                     <TableCell><StatusBadge status={status} /></TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
@@ -290,7 +335,7 @@ function ClientsPage() {
               })}
               {!isLoading && filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="py-10 text-center text-muted-foreground">No clients found</TableCell>
+                  <TableCell colSpan={9} className="py-10 text-center text-muted-foreground">{t("clients.noClients")}</TableCell>
                 </TableRow>
               )}
             </TableBody>
@@ -301,35 +346,45 @@ function ClientsPage() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editing ? "Edit client" : "Add new client"}</DialogTitle>
+            <DialogTitle>{editing ? t("clients.editTitle") : t("clients.addTitle")}</DialogTitle>
             <DialogDescription>
-              {editing ? "Update member information and subscription." : "Register a new member to your gym."}
+              {editing ? t("clients.editDescription") : t("clients.addDescription")}
             </DialogDescription>
           </DialogHeader>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Full name" error={errors.fullName}>
+            <Field label={t("clients.fullName")} error={errors.fullName}>
               <Input value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} />
             </Field>
-            <Field label="Phone" error={errors.phone}>
+            <Field label={t("clients.phone")} error={errors.phone}>
               <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
             </Field>
-            <Field label="Email" error={errors.email}>
+            <Field label={t("clients.email")} error={errors.email}>
               <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
             </Field>
-            <Field label="Gender">
+            <Field label={t("clients.gender")}>
               <Select value={form.gender} onValueChange={(v) => setForm({ ...form, gender: v as "Male" | "Female" })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Male">Male</SelectItem>
-                  <SelectItem value="Female">Female</SelectItem>
+                  <SelectItem value="Male">{t("clients.male")}</SelectItem>
+                  <SelectItem value="Female">{t("clients.female")}</SelectItem>
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="Join date">
+            <Field label={t("clients.joinDate")}>
               <Input type="date" value={form.joinDate} onChange={(e) => setForm({ ...form, joinDate: e.target.value })} />
             </Field>
-            <Field label="Subscription pack">
+            <Field label={t("clients.floorAccess")}>
+              <Select value={form.trainingAccess} onValueChange={(v) => setForm({ ...form, trainingAccess: v as Client["trainingAccess"] })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Martial Arts">{t("clients.firstFloor")}</SelectItem>
+                  <SelectItem value="Gym & Bodybuilding">{t("clients.secondFloor")}</SelectItem>
+                  <SelectItem value="Both">{t("clients.bothFloors")}</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label={t("clients.subscriptionPack")}>
               <Select
                 value={form.subscriptionPlanId ?? "custom"}
                 onValueChange={(v) => {
@@ -339,13 +394,14 @@ function ClientsPage() {
                     subscriptionPlanId: pack?.id ?? null,
                     subscriptionType: pack?.name ?? form.subscriptionType,
                     subscriptionDurationMonths: pack?.durationMonths ?? form.subscriptionDurationMonths,
+                    trainingAccess: pack ? inferTrainingAccess(pack.name) ?? form.trainingAccess : form.trainingAccess,
                     amountPaid: pack?.price ?? form.amountPaid,
                   });
                 }}
               >
                 <SelectTrigger><SelectValue placeholder="Select pack" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="custom">Custom / existing pack</SelectItem>
+                  <SelectItem value="custom">{t("clients.customPack")}</SelectItem>
                   {activePacks.map((pack) => (
                     <SelectItem key={pack.id} value={pack.id}>
                       {pack.name} · {pack.durationMonths} month{pack.durationMonths === 1 ? "" : "s"} · {formatCurrency(pack.price, currency)}
@@ -354,20 +410,20 @@ function ClientsPage() {
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="Pack name">
+            <Field label={t("clients.packName")}>
               <Input value={form.subscriptionType} onChange={(e) => setForm({ ...form, subscriptionType: e.target.value, subscriptionPlanId: null })} />
             </Field>
-            <Field label="Duration (months)" error={errors.subscriptionDurationMonths}>
+            <Field label={t("clients.durationMonths")} error={errors.subscriptionDurationMonths}>
               <Input type="number" min={1} max={36} value={form.subscriptionDurationMonths} onChange={(e) => setForm({ ...form, subscriptionDurationMonths: Number(e.target.value), subscriptionPlanId: null })} />
             </Field>
-            <Field label="Subscription start">
+            <Field label={t("clients.subscriptionStart")}>
               <Input type="date" value={form.subscriptionStart} onChange={(e) => setForm({ ...form, subscriptionStart: e.target.value })} />
             </Field>
-            <Field label="Offer">
+            <Field label={t("clients.offer")}>
               <Select value={form.offerId ?? "none"} onValueChange={(v) => setForm({ ...form, offerId: v === "none" ? null : v })}>
                 <SelectTrigger><SelectValue placeholder="No offer" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">No offer</SelectItem>
+                  <SelectItem value="none">{t("common.noOffer")}</SelectItem>
                   {offers.map((offer) => (
                     <SelectItem key={offer.id} value={offer.id}>
                       {offer.name} ({offer.discountPercent}% off)
@@ -376,43 +432,61 @@ function ClientsPage() {
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="End date (auto)">
+            <Field label={t("clients.endDateAuto")}>
               <Input value={computeEndDate(form.subscriptionStart, form.subscriptionDurationMonths)} readOnly className="bg-muted" />
             </Field>
-            <Field label="Payment status">
-              <Select value={form.paymentStatus} onValueChange={(v) => setForm({ ...form, paymentStatus: v as "Paid" | "Unpaid" | "Late" })}>
+            <Field label={`${t("clients.assuranceFee")} (${currency})`} error={errors.assuranceFee}>
+              <Input type="number" min={0} value={form.assuranceFee} onChange={(e) => setForm({ ...form, assuranceFee: Number(e.target.value) })} />
+            </Field>
+            <Field label={t("clients.assurancePayment")}>
+              <Select value={form.assurancePaymentStatus} onValueChange={(v) => setForm({ ...form, assurancePaymentStatus: v as "Paid" | "Unpaid" })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Paid">Paid</SelectItem>
-                  <SelectItem value="Unpaid">Unpaid</SelectItem>
-                  <SelectItem value="Late">Late</SelectItem>
+                  <SelectItem value="Paid">{t("status.Paid")}</SelectItem>
+                  <SelectItem value="Unpaid">{t("status.Unpaid")}</SelectItem>
                 </SelectContent>
               </Select>
             </Field>
-            <Field label={`Amount paid (${currency})`} error={errors.amountPaid}>
+            <Field label={t("clients.assuranceStart")}>
+              <Input type="date" value={form.assuranceStart ?? ""} onChange={(e) => setForm({ ...form, assuranceStart: e.target.value || null })} />
+            </Field>
+            <Field label={t("clients.assuranceEndAuto")}>
+              <Input value={form.assuranceStart ? computeAssuranceEndDate(form.assuranceStart) : ""} readOnly className="bg-muted" />
+            </Field>
+            <Field label={t("clients.paymentStatus")}>
+              <Select value={form.paymentStatus} onValueChange={(v) => setForm({ ...form, paymentStatus: v as "Paid" | "Unpaid" | "Late" })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Paid">{t("status.Paid")}</SelectItem>
+                  <SelectItem value="Unpaid">{t("status.Unpaid")}</SelectItem>
+                  <SelectItem value="Late">{t("status.Late")}</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label={`${t("clients.amountPaid")} (${currency})`} error={errors.amountPaid}>
               <Input type="number" min={0} value={form.amountPaid} onChange={(e) => setForm({ ...form, amountPaid: Number(e.target.value) })} />
             </Field>
             {!editing && form.paymentStatus === "Paid" && (
-              <Field label="Payment method">
+              <Field label={t("clients.paymentMethod")}>
                 <Select value={form.paymentMethod} onValueChange={(v) => setForm({ ...form, paymentMethod: v as FormState["paymentMethod"] })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Cash">Cash</SelectItem>
-                    <SelectItem value="Card">Card</SelectItem>
-                    <SelectItem value="Bank transfer">Bank transfer</SelectItem>
+                    <SelectItem value="Cash">{t("status.Cash")}</SelectItem>
+                    <SelectItem value="Card">{t("status.Card")}</SelectItem>
+                    <SelectItem value="Bank transfer">{t("status.Bank transfer")}</SelectItem>
                   </SelectContent>
                 </Select>
               </Field>
             )}
             <div className="sm:col-span-2">
-              <Field label="Notes">
+              <Field label={t("clients.notes")}>
                 <Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
               </Field>
             </div>
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>{t("common.cancel")}</Button>
             <Button onClick={submit} disabled={isPending} className="bg-gradient-brand-strong text-white">
               {isPending ? "Saving…" : editing ? "Save changes" : "Add client"}
             </Button>
@@ -423,13 +497,13 @@ function ClientsPage() {
       <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete this client?</AlertDialogTitle>
+            <AlertDialogTitle>{t("clients.deleteTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently remove the client. This action cannot be undone.
+              {t("clients.deleteDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelete} disabled={deleteClient.isPending} className="bg-rose-600 text-white hover:bg-rose-700">
               {deleteClient.isPending ? "Deleting…" : "Delete"}
             </AlertDialogAction>

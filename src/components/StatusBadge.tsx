@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { translateStatus, useI18n } from "@/lib/i18n";
 
 type Status =
   | "Active"
@@ -34,6 +35,7 @@ const styles: Record<Status, string> = {
 };
 
 export function StatusBadge({ status }: { status: Status | string }) {
+  const { locale } = useI18n();
   return (
     <span
       className={cn(
@@ -42,7 +44,7 @@ export function StatusBadge({ status }: { status: Status | string }) {
       )}
     >
       <span className="h-1.5 w-1.5 rounded-full bg-current opacity-70" />
-      {status}
+      {translateStatus(status, locale)}
     </span>
   );
 }

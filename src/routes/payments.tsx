@@ -18,6 +18,7 @@ import { computeEndDate, formatCurrency } from "@/lib/storage";
 import { useClients } from "@/hooks/use-clients";
 import { usePayments, useCreatePayment } from "@/hooks/use-payments";
 import { useSettings } from "@/hooks/use-settings";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/payments")({
   component: PaymentsPage,
@@ -32,6 +33,7 @@ const paymentSchema = z.object({
 });
 
 function PaymentsPage() {
+  const { t } = useI18n();
   const { data: settings } = useSettings();
   const { data: clients = [] } = useClients();
   const { data: payments = [], isLoading } = usePayments();
@@ -86,7 +88,7 @@ function PaymentsPage() {
       },
       {
         onSuccess: () => {
-          toast.success("Payment recorded");
+          toast.success(t("payments.saved"));
           setOpen(false);
           setErrors({});
         },
@@ -100,33 +102,33 @@ function PaymentsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Payments"
-        description="Record transactions and review your earnings."
+        title={t("payments.title")}
+        description={t("payments.description")}
         actions={
           <Button onClick={() => setOpen(true)} className="bg-gradient-brand-strong text-white shadow-soft">
-            <Plus className="mr-2 h-4 w-4" /> Add payment
+            <Plus className="mr-2 h-4 w-4" /> {t("payments.add")}
           </Button>
         }
       />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatCard label="This month" value={formatCurrency(monthlyEarnings, currency)} icon={Calendar} variant="brand" />
-        <StatCard label="This year" value={formatCurrency(annualEarnings, currency)} icon={TrendingUp} variant="warning" />
-        <StatCard label="Total payments" value={payments.length} icon={DollarSign} />
+        <StatCard label={t("payments.thisMonth")} value={formatCurrency(monthlyEarnings, currency)} icon={Calendar} variant="brand" />
+        <StatCard label={t("payments.thisYear")} value={formatCurrency(annualEarnings, currency)} icon={TrendingUp} variant="warning" />
+        <StatCard label={t("payments.totalPayments")} value={payments.length} icon={DollarSign} />
       </div>
 
       <Card className="rounded-2xl border-0 p-5 shadow-soft">
-        <h2 className="mb-4 text-lg font-bold">Payment history</h2>
+        <h2 className="mb-4 text-lg font-bold">{t("payments.history")}</h2>
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Client</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Period</TableHead>
-                <TableHead>Method</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
+                <TableHead>{t("common.client")}</TableHead>
+                <TableHead>{t("common.date")}</TableHead>
+                <TableHead>{t("payments.period")}</TableHead>
+                <TableHead>{t("common.method")}</TableHead>
+                <TableHead>{t("common.status")}</TableHead>
+                <TableHead className="text-right">{t("common.amount")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -151,7 +153,7 @@ function PaymentsPage() {
               ))}
               {!isLoading && sorted.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">No payments yet</TableCell>
+                  <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">{t("payments.noPayments")}</TableCell>
                 </TableRow>
               )}
             </TableBody>
@@ -161,10 +163,10 @@ function PaymentsPage() {
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle>Record payment</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t("payments.record")}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="sm:col-span-2 space-y-1.5">
-              <Label className="text-xs font-semibold text-muted-foreground">Client</Label>
+              <Label className="text-xs font-semibold text-muted-foreground">{t("common.client")}</Label>
               <Select
                 value={form.clientId}
                 onValueChange={(v) => {
@@ -172,7 +174,7 @@ function PaymentsPage() {
                   setForm({ ...form, clientId: v, amount: c?.amountPaid || (c?.subscriptionType === "Annual" ? (settings?.annualPrice ?? 480) : (settings?.monthlyPrice ?? 45)) });
                 }}
               >
-                <SelectTrigger><SelectValue placeholder="Select client" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t("payments.selectClient")} /></SelectTrigger>
                 <SelectContent>
                   {clients.map((c) => (
                     <SelectItem key={c.id} value={c.id}>{c.fullName} — {c.subscriptionType}</SelectItem>
@@ -182,38 +184,38 @@ function PaymentsPage() {
               {errors.clientId && <p className="text-xs text-rose-600">{errors.clientId}</p>}
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-muted-foreground">Amount ({currency})</Label>
+              <Label className="text-xs font-semibold text-muted-foreground">{t("common.amount")} ({currency})</Label>
               <Input type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: Number(e.target.value) })} />
               {errors.amount && <p className="text-xs text-rose-600">{errors.amount}</p>}
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-muted-foreground">Date</Label>
+              <Label className="text-xs font-semibold text-muted-foreground">{t("common.date")}</Label>
               <Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-muted-foreground">Method</Label>
+              <Label className="text-xs font-semibold text-muted-foreground">{t("common.method")}</Label>
               <Select value={form.method} onValueChange={(v) => setForm({ ...form, method: v as typeof form.method })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Cash">Cash</SelectItem>
-                  <SelectItem value="Card">Card</SelectItem>
-                  <SelectItem value="Bank transfer">Bank transfer</SelectItem>
+                  <SelectItem value="Cash">{t("status.Cash")}</SelectItem>
+                  <SelectItem value="Card">{t("status.Card")}</SelectItem>
+                  <SelectItem value="Bank transfer">{t("status.Bank transfer")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-muted-foreground">Status</Label>
+              <Label className="text-xs font-semibold text-muted-foreground">{t("common.status")}</Label>
               <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as typeof form.status })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Paid">Paid</SelectItem>
-                  <SelectItem value="Unpaid">Unpaid</SelectItem>
+                  <SelectItem value="Paid">{t("status.Paid")}</SelectItem>
+                  <SelectItem value="Unpaid">{t("status.Unpaid")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>{t("common.cancel")}</Button>
             <Button onClick={submit} disabled={createPayment.isPending} className="bg-gradient-brand-strong text-white">
               {createPayment.isPending ? "Saving…" : "Save payment"}
             </Button>

@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useSettings, useUpdateSettings } from "@/hooks/use-settings";
 import { api } from "@/lib/api";
+import { useI18n } from "@/lib/i18n";
 import type { Settings } from "@/lib/types";
 
 export const Route = createFileRoute("/settings")({
@@ -32,6 +33,7 @@ const EMPTY_SETTINGS: Settings = {
 };
 
 function SettingsPage() {
+  const { t } = useI18n();
   const { data: settings } = useSettings();
   const updateSettings = useUpdateSettings();
   const [form, setForm] = useState<Settings>(EMPTY_SETTINGS);
@@ -51,30 +53,30 @@ function SettingsPage() {
       return;
     }
     updateSettings.mutate(r.data, {
-      onSuccess: () => { toast.success("Settings saved"); setErrors({}); },
+      onSuccess: () => { toast.success(t("settings.saved")); setErrors({}); },
       onError: (err) => toast.error(err.message),
     });
   }
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Settings" description="Configure your gym's preferences." />
+      <PageHeader title={t("settings.title")} description={t("settings.description")} />
 
       <Card className="rounded-2xl border-0 p-6 shadow-soft">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Gym name" error={errors.gymName}>
+          <Field label={t("settings.gymName")} error={errors.gymName}>
             <Input value={form.gymName} onChange={(e) => setForm({ ...form, gymName: e.target.value })} />
           </Field>
-          <Field label="Currency" error={errors.currency}>
+          <Field label={t("settings.currency")} error={errors.currency}>
             <Input value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value.toUpperCase() })} />
           </Field>
-          <Field label="Monthly subscription price" error={errors.monthlyPrice}>
+          <Field label={t("settings.monthlyPrice")} error={errors.monthlyPrice}>
             <Input type="number" min={0} value={form.monthlyPrice} onChange={(e) => setForm({ ...form, monthlyPrice: Number(e.target.value) })} />
           </Field>
-          <Field label="Annual subscription price" error={errors.annualPrice}>
+          <Field label={t("settings.annualPrice")} error={errors.annualPrice}>
             <Input type="number" min={0} value={form.annualPrice} onChange={(e) => setForm({ ...form, annualPrice: Number(e.target.value) })} />
           </Field>
-          <Field label="Reminder days before due date" error={errors.reminderDays}>
+          <Field label={t("settings.reminderDays")} error={errors.reminderDays}>
             <Input type="number" min={0} max={60} value={form.reminderDays} onChange={(e) => setForm({ ...form, reminderDays: Number(e.target.value) })} />
           </Field>
         </div>

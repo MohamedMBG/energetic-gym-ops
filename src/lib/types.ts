@@ -2,6 +2,8 @@ export type SubscriptionType = string;
 export type PaymentStatus = "Paid" | "Unpaid" | "Late";
 export type PaymentMethod = "Cash" | "Card" | "Bank transfer";
 export type Gender = "Male" | "Female";
+export type TrainingAccess = "Martial Arts" | "Gym & Bodybuilding" | "Both";
+export type AssurancePaymentStatus = "Paid" | "Unpaid";
 export type OfferStatus = "Active" | "Paused" | "Ended";
 export type PackStatus = "Active" | "Archived";
 export type EquipmentStatus = "Operational" | "Maintenance" | "Out of service";
@@ -47,11 +49,16 @@ export interface Client {
   email: string;
   gender: Gender;
   joinDate: string; // ISO date
+  trainingAccess: TrainingAccess;
   subscriptionType: SubscriptionType;
   subscriptionPlanId: string | null;
   subscriptionDurationMonths: number;
   subscriptionStart: string;
   subscriptionEnd: string;
+  assuranceFee: number;
+  assuranceStart: string | null;
+  assuranceEnd: string | null;
+  assurancePaymentStatus: AssurancePaymentStatus;
   offerId: string | null;
   paymentStatus: PaymentStatus;
   lastPaymentDate: string | null;

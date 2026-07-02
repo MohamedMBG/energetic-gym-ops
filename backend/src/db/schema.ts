@@ -103,11 +103,16 @@ export const clients = pgTable(
     email: text('email').notNull(),
     gender: text('gender').notNull(), // 'Male' | 'Female'
     joinDate: text('join_date').notNull(), // ISO date string
+    trainingAccess: text('training_access').notNull().default('Gym & Bodybuilding'), // 'Martial Arts' | 'Gym & Bodybuilding' | 'Both'
     subscriptionType: text('subscription_type').notNull(), // 'Monthly' | 'Annual'
     subscriptionPlanId: text('subscription_plan_id').references(() => subscriptionPlans.id),
     subscriptionDurationMonths: integer('subscription_duration_months').notNull().default(1),
     subscriptionStart: text('subscription_start').notNull(),
     subscriptionEnd: text('subscription_end').notNull(),
+    assuranceFee: real('assurance_fee').notNull().default(200),
+    assuranceStart: text('assurance_start'),
+    assuranceEnd: text('assurance_end'),
+    assurancePaymentStatus: text('assurance_payment_status').notNull().default('Unpaid'), // 'Paid' | 'Unpaid'
     offerId: text('offer_id').references(() => offers.id),
     paymentStatus: text('payment_status').notNull(), // 'Paid' | 'Unpaid' | 'Late'
     lastPaymentDate: text('last_payment_date'),

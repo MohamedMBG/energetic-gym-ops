@@ -25,26 +25,23 @@ type UpdatePackInput = z.infer<typeof updatePackSchema>;
 
 async function ensureDefaultPacks(gymId: string) {
   const existing = await db
-    .select({ id: subscriptionPlans.id })
+    .select({ id: subscriptionPlans.id, name: subscriptionPlans.name })
     .from(subscriptionPlans)
-    .where(eq(subscriptionPlans.gymId, gymId))
-    .limit(1);
-
-  if (existing.length > 0) return;
+    .where(eq(subscriptionPlans.gymId, gymId));
 
   const [gym] = await db.select().from(gyms).where(eq(gyms.id, gymId));
   const monthlyPrice = gym?.monthlyPrice ?? 250;
   const annualPrice = gym?.annualPrice ?? monthlyPrice * 10;
   const now = new Date();
 
-  await db.insert(subscriptionPlans).values([
+  const defaultPacks = [
     {
       id: crypto.randomUUID(),
       gymId,
-      name: 'Monthly',
+      name: 'Martial Arts Monthly',
       durationMonths: 1,
       price: monthlyPrice,
-      description: 'Standard one-month subscription.',
+      description: 'One-month first-floor martial arts subscription.',
       status: 'Active',
       isDefault: 1,
       createdAt: now,
@@ -53,10 +50,10 @@ async function ensureDefaultPacks(gymId: string) {
     {
       id: crypto.randomUUID(),
       gymId,
-      name: '3 Months',
-      durationMonths: 3,
-      price: Math.round(monthlyPrice * 3 * 0.9),
-      description: 'Three-month discounted package.',
+      name: 'Gym & Bodybuilding Monthly',
+      durationMonths: 1,
+      price: monthlyPrice,
+      description: 'One-month second-floor gym and bodybuilding subscription.',
       status: 'Active',
       isDefault: 1,
       createdAt: now,
@@ -65,10 +62,10 @@ async function ensureDefaultPacks(gymId: string) {
     {
       id: crypto.randomUUID(),
       gymId,
-      name: '6 Months',
-      durationMonths: 6,
-      price: Math.round(monthlyPrice * 6 * 0.85),
-      description: 'Six-month commitment package.',
+      name: 'Both Floors Monthly',
+      durationMonths: 1,
+      price: Math.round(monthlyPrice * 1.6),
+      description: 'One-month full access to martial arts plus gym and bodybuilding.',
       status: 'Active',
       isDefault: 1,
       createdAt: now,
@@ -77,10 +74,10 @@ async function ensureDefaultPacks(gymId: string) {
     {
       id: crypto.randomUUID(),
       gymId,
-      name: 'Yearly',
+      name: 'Martial Arts Yearly',
       durationMonths: 12,
       price: annualPrice,
-      description: 'Full-year best-value subscription.',
+      description: 'Full-year first-floor martial arts subscription.',
       status: 'Active',
       isDefault: 1,
       createdAt: now,
@@ -89,22 +86,22 @@ async function ensureDefaultPacks(gymId: string) {
     {
       id: crypto.randomUUID(),
       gymId,
-      name: 'Summer Pack',
-      durationMonths: 3,
-      price: Math.round(monthlyPrice * 3 * 0.8),
-      description: 'Default summer campaign pack.',
-      status: 'Active',
-      isDefault: 1,
-      createdAt: now,
-      updatedAt: now,
-    },
-    {
-      id: crypto.randomUUID(),
-      gymId,
-      name: 'First Year Pack',
+      name: 'Gym & Bodybuilding Yearly',
       durationMonths: 12,
       price: annualPrice,
-      description: 'Default first-year starter package.',
+      description: 'Full-year second-floor gym and bodybuilding subscription.',
+      status: 'Active',
+      isDefault: 1,
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: crypto.randomUUID(),
+      gymId,
+      name: 'Both Floors Yearly',
+      durationMonths: 12,
+      price: Math.round(annualPrice * 1.6),
+      description: 'Full-year full access to both floors.',
       status: 'Active',
       isDefault: 1,
       createdAt: now,
@@ -122,7 +119,13 @@ async function ensureDefaultPacks(gymId: string) {
       createdAt: now,
       updatedAt: now,
     },
-  ]);
+  ];
+
+  const existingNames = new Set(existing.map((pack) => pack.name));
+  const missingPacks = defaultPacks.filter((pack) => !existingNames.has(pack.name));
+  if (missingPacks.length > 0) {
+    await db.insert(subscriptionPlans).values(missingPacks);
+  }
 }
 
 router.get('/', async (req, res) => {
