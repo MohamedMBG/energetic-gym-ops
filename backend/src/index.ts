@@ -14,6 +14,7 @@ import settingsRoutes from './routes/settings';
 import offerRoutes from './routes/offers';
 import packRoutes from './routes/packs';
 import equipmentRoutes from './routes/equipment';
+import { ensureAdminAccount } from './lib/admin-bootstrap';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -67,6 +68,16 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   res.status(500).json({ error: { message: 'Internal server error' } });
 });
 
-app.listen(PORT, () => {
-  console.log(`Backend running on http://localhost:${PORT}`);
+async function start() {
+  await ensureAdminAccount();
+
+  app.listen(PORT, () => {
+    console.log(`Backend running on http://localhost:${PORT}`);
+  });
+}
+
+start().catch((error) => {
+  console.error('Failed to start backend');
+  console.error(error);
+  process.exit(1);
 });
