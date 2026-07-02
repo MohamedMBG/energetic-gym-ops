@@ -172,10 +172,10 @@ function EquipmentPage() {
               <TableRow>
                 <TableHead>{t("equipment.item")}</TableHead>
                 <TableHead>{t("common.status")}</TableHead>
-                <TableHead>{t("equipment.lastMaintenance")}</TableHead>
-                <TableHead>{t("equipment.nextMaintenance")}</TableHead>
-                <TableHead>{t("equipment.repairCost")}</TableHead>
-                <TableHead>{t("equipment.supplier")}</TableHead>
+                <TableHead className="hidden lg:table-cell">{t("equipment.lastMaintenance")}</TableHead>
+                <TableHead className="hidden md:table-cell">{t("equipment.nextMaintenance")}</TableHead>
+                <TableHead className="hidden sm:table-cell">{t("equipment.repairCost")}</TableHead>
+                <TableHead className="hidden xl:table-cell">{t("equipment.supplier")}</TableHead>
                 <TableHead className="text-right">{t("common.actions")}</TableHead>
               </TableRow>
             </TableHeader>
@@ -196,14 +196,14 @@ function EquipmentPage() {
                       </div>
                     </TableCell>
                     <TableCell><StatusBadge status={item.status} /></TableCell>
-                    <TableCell>{item.lastMaintenanceDate || "-"}</TableCell>
-                    <TableCell>
+                    <TableCell className="hidden lg:table-cell">{item.lastMaintenanceDate || "-"}</TableCell>
+                    <TableCell className="hidden md:table-cell">
                       <span className={overdue ? "font-semibold text-rose-700" : ""}>
                         {item.nextMaintenanceDate || "-"}
                       </span>
                     </TableCell>
-                    <TableCell className="font-semibold">{formatCurrency(item.repairCost, currency)}</TableCell>
-                    <TableCell>
+                    <TableCell className="hidden sm:table-cell font-semibold">{formatCurrency(item.repairCost, currency)}</TableCell>
+                    <TableCell className="hidden xl:table-cell">
                       <div>{item.supplierName || "-"}</div>
                       {item.supplierPhone && <div className="text-xs text-muted-foreground">{item.supplierPhone}</div>}
                     </TableCell>

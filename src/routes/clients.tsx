@@ -115,6 +115,7 @@ function ClientsPage() {
 
   const currency = settings?.currency ?? "MAD";
   const isPending = createClient.isPending || updateClient.isPending;
+  const advancedError = !!(errors.subscriptionDurationMonths || errors.assuranceFee);
   const activePacks = packs.filter((pack) => pack.status === "Active");
   const typeOptions = Array.from(new Set(clients.map((c) => c.subscriptionType))).filter(Boolean);
 
@@ -266,11 +267,11 @@ function ClientsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>{t("common.client")}</TableHead>
-                <TableHead>{t("clients.contact")}</TableHead>
-                <TableHead>{t("common.plan")}</TableHead>
-                <TableHead>{t("common.access")}</TableHead>
-                <TableHead>{t("clients.endDate")}</TableHead>
-                <TableHead>{t("common.assurance")}</TableHead>
+                <TableHead className="hidden lg:table-cell">{t("clients.contact")}</TableHead>
+                <TableHead className="hidden sm:table-cell">{t("common.plan")}</TableHead>
+                <TableHead className="hidden xl:table-cell">{t("common.access")}</TableHead>
+                <TableHead className="hidden md:table-cell">{t("clients.endDate")}</TableHead>
+                <TableHead className="hidden xl:table-cell">{t("common.assurance")}</TableHead>
                 <TableHead>{t("common.status")}</TableHead>
                 <TableHead>{t("common.payment")}</TableHead>
                 <TableHead className="text-right">{t("common.actions")}</TableHead>
@@ -301,14 +302,14 @@ function ClientsPage() {
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden lg:table-cell">
                       <div className="text-sm">{c.email}</div>
                       <div className="text-xs text-muted-foreground">{c.phone}</div>
                     </TableCell>
-                    <TableCell><StatusBadge status={c.subscriptionType} /></TableCell>
-                    <TableCell><StatusBadge status={c.trainingAccess ?? "Gym & Bodybuilding"} /></TableCell>
-                    <TableCell>{new Date(c.subscriptionEnd).toLocaleDateString()}</TableCell>
-                    <TableCell>
+                    <TableCell className="hidden sm:table-cell"><StatusBadge status={c.subscriptionType} /></TableCell>
+                    <TableCell className="hidden xl:table-cell"><StatusBadge status={c.trainingAccess ?? "Gym & Bodybuilding"} /></TableCell>
+                    <TableCell className="hidden md:table-cell">{new Date(c.subscriptionEnd).toLocaleDateString()}</TableCell>
+                    <TableCell className="hidden xl:table-cell">
                       <div className="flex flex-col gap-1">
                         <StatusBadge status={assStatus} />
                         <span className="text-xs text-muted-foreground">
@@ -362,28 +363,6 @@ function ClientsPage() {
             <Field label={t("clients.email")} error={errors.email}>
               <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
             </Field>
-            <Field label={t("clients.gender")}>
-              <Select value={form.gender} onValueChange={(v) => setForm({ ...form, gender: v as "Male" | "Female" })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Male">{t("clients.male")}</SelectItem>
-                  <SelectItem value="Female">{t("clients.female")}</SelectItem>
-                </SelectContent>
-              </Select>
-            </Field>
-            <Field label={t("clients.joinDate")}>
-              <Input type="date" value={form.joinDate} onChange={(e) => setForm({ ...form, joinDate: e.target.value })} />
-            </Field>
-            <Field label={t("clients.floorAccess")}>
-              <Select value={form.trainingAccess} onValueChange={(v) => setForm({ ...form, trainingAccess: v as Client["trainingAccess"] })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Martial Arts">{t("clients.firstFloor")}</SelectItem>
-                  <SelectItem value="Gym & Bodybuilding">{t("clients.secondFloor")}</SelectItem>
-                  <SelectItem value="Both">{t("clients.bothFloors")}</SelectItem>
-                </SelectContent>
-              </Select>
-            </Field>
             <Field label={t("clients.subscriptionPack")}>
               <Select
                 value={form.subscriptionPlanId ?? "custom"}
@@ -410,48 +389,8 @@ function ClientsPage() {
                 </SelectContent>
               </Select>
             </Field>
-            <Field label={t("clients.packName")}>
-              <Input value={form.subscriptionType} onChange={(e) => setForm({ ...form, subscriptionType: e.target.value, subscriptionPlanId: null })} />
-            </Field>
-            <Field label={t("clients.durationMonths")} error={errors.subscriptionDurationMonths}>
-              <Input type="number" min={1} max={36} value={form.subscriptionDurationMonths} onChange={(e) => setForm({ ...form, subscriptionDurationMonths: Number(e.target.value), subscriptionPlanId: null })} />
-            </Field>
             <Field label={t("clients.subscriptionStart")}>
               <Input type="date" value={form.subscriptionStart} onChange={(e) => setForm({ ...form, subscriptionStart: e.target.value })} />
-            </Field>
-            <Field label={t("clients.offer")}>
-              <Select value={form.offerId ?? "none"} onValueChange={(v) => setForm({ ...form, offerId: v === "none" ? null : v })}>
-                <SelectTrigger><SelectValue placeholder={t("common.noOffer")} /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">{t("common.noOffer")}</SelectItem>
-                  {offers.map((offer) => (
-                    <SelectItem key={offer.id} value={offer.id}>
-                      {offer.name} ({offer.discountPercent}%)
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
-            <Field label={t("clients.endDateAuto")}>
-              <Input value={computeEndDate(form.subscriptionStart, form.subscriptionDurationMonths)} readOnly className="bg-muted" />
-            </Field>
-            <Field label={`${t("clients.assuranceFee")} (${currency})`} error={errors.assuranceFee}>
-              <Input type="number" min={0} value={form.assuranceFee} onChange={(e) => setForm({ ...form, assuranceFee: Number(e.target.value) })} />
-            </Field>
-            <Field label={t("clients.assurancePayment")}>
-              <Select value={form.assurancePaymentStatus} onValueChange={(v) => setForm({ ...form, assurancePaymentStatus: v as "Paid" | "Unpaid" })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Paid">{t("status.Paid")}</SelectItem>
-                  <SelectItem value="Unpaid">{t("status.Unpaid")}</SelectItem>
-                </SelectContent>
-              </Select>
-            </Field>
-            <Field label={t("clients.assuranceStart")}>
-              <Input type="date" value={form.assuranceStart ?? ""} onChange={(e) => setForm({ ...form, assuranceStart: e.target.value || null })} />
-            </Field>
-            <Field label={t("clients.assuranceEndAuto")}>
-              <Input value={form.assuranceStart ? computeAssuranceEndDate(form.assuranceStart) : ""} readOnly className="bg-muted" />
             </Field>
             <Field label={t("clients.paymentStatus")}>
               <Select value={form.paymentStatus} onValueChange={(v) => setForm({ ...form, paymentStatus: v as "Paid" | "Unpaid" | "Late" })}>
@@ -478,12 +417,82 @@ function ClientsPage() {
                 </Select>
               </Field>
             )}
-            <div className="sm:col-span-2">
-              <Field label={t("clients.notes")}>
-                <Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
-              </Field>
-            </div>
           </div>
+
+          <details open={advancedError || undefined} className="mt-4 rounded-xl border border-border">
+            <summary className="cursor-pointer select-none px-4 py-3 text-sm font-semibold text-muted-foreground">
+              {t("common.moreOptions")}
+            </summary>
+            <div className="grid grid-cols-1 gap-4 border-t border-border p-4 sm:grid-cols-2">
+              <Field label={t("clients.gender")}>
+                <Select value={form.gender} onValueChange={(v) => setForm({ ...form, gender: v as "Male" | "Female" })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Male">{t("clients.male")}</SelectItem>
+                    <SelectItem value="Female">{t("clients.female")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field label={t("clients.joinDate")}>
+                <Input type="date" value={form.joinDate} onChange={(e) => setForm({ ...form, joinDate: e.target.value })} />
+              </Field>
+              <Field label={t("clients.floorAccess")}>
+                <Select value={form.trainingAccess} onValueChange={(v) => setForm({ ...form, trainingAccess: v as Client["trainingAccess"] })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Martial Arts">{t("clients.firstFloor")}</SelectItem>
+                    <SelectItem value="Gym & Bodybuilding">{t("clients.secondFloor")}</SelectItem>
+                    <SelectItem value="Both">{t("clients.bothFloors")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field label={t("clients.packName")}>
+                <Input value={form.subscriptionType} onChange={(e) => setForm({ ...form, subscriptionType: e.target.value, subscriptionPlanId: null })} />
+              </Field>
+              <Field label={t("clients.durationMonths")} error={errors.subscriptionDurationMonths}>
+                <Input type="number" min={1} max={36} value={form.subscriptionDurationMonths} onChange={(e) => setForm({ ...form, subscriptionDurationMonths: Number(e.target.value), subscriptionPlanId: null })} />
+              </Field>
+              <Field label={t("clients.endDateAuto")}>
+                <Input value={computeEndDate(form.subscriptionStart, form.subscriptionDurationMonths)} readOnly className="bg-muted" />
+              </Field>
+              <Field label={t("clients.offer")}>
+                <Select value={form.offerId ?? "none"} onValueChange={(v) => setForm({ ...form, offerId: v === "none" ? null : v })}>
+                  <SelectTrigger><SelectValue placeholder={t("common.noOffer")} /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">{t("common.noOffer")}</SelectItem>
+                    {offers.map((offer) => (
+                      <SelectItem key={offer.id} value={offer.id}>
+                        {offer.name} ({offer.discountPercent}%)
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field label={`${t("clients.assuranceFee")} (${currency})`} error={errors.assuranceFee}>
+                <Input type="number" min={0} value={form.assuranceFee} onChange={(e) => setForm({ ...form, assuranceFee: Number(e.target.value) })} />
+              </Field>
+              <Field label={t("clients.assurancePayment")}>
+                <Select value={form.assurancePaymentStatus} onValueChange={(v) => setForm({ ...form, assurancePaymentStatus: v as "Paid" | "Unpaid" })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Paid">{t("status.Paid")}</SelectItem>
+                    <SelectItem value="Unpaid">{t("status.Unpaid")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field label={t("clients.assuranceStart")}>
+                <Input type="date" value={form.assuranceStart ?? ""} onChange={(e) => setForm({ ...form, assuranceStart: e.target.value || null })} />
+              </Field>
+              <Field label={t("clients.assuranceEndAuto")}>
+                <Input value={form.assuranceStart ? computeAssuranceEndDate(form.assuranceStart) : ""} readOnly className="bg-muted" />
+              </Field>
+              <div className="sm:col-span-2">
+                <Field label={t("clients.notes")}>
+                  <Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+                </Field>
+              </div>
+            </div>
+          </details>
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>{t("common.cancel")}</Button>

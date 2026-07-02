@@ -77,12 +77,12 @@ function SubscriptionsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>{t("common.client")}</TableHead>
-                <TableHead>{t("common.plan")}</TableHead>
-                <TableHead>{t("common.access")}</TableHead>
-                <TableHead>{t("common.start")}</TableHead>
-                <TableHead>{t("common.end")}</TableHead>
+                <TableHead className="hidden sm:table-cell">{t("common.plan")}</TableHead>
+                <TableHead className="hidden xl:table-cell">{t("common.access")}</TableHead>
+                <TableHead className="hidden lg:table-cell">{t("common.start")}</TableHead>
+                <TableHead className="hidden md:table-cell">{t("common.end")}</TableHead>
                 <TableHead>{t("subscriptions.daysLeft")}</TableHead>
-                <TableHead>{t("common.assurance")}</TableHead>
+                <TableHead className="hidden xl:table-cell">{t("common.assurance")}</TableHead>
                 <TableHead>{t("common.status")}</TableHead>
                 <TableHead className="text-right">{t("common.actions")}</TableHead>
               </TableRow>
@@ -103,16 +103,16 @@ function SubscriptionsPage() {
                 return (
                   <TableRow key={c.id} className={cn("transition-colors hover:bg-muted/50", subscriptionFlagClass(status), assuranceFlagClass(assStatus))}>
                     <TableCell className="font-medium">{c.fullName}</TableCell>
-                    <TableCell><StatusBadge status={c.subscriptionType} /></TableCell>
-                    <TableCell><StatusBadge status={c.trainingAccess ?? "Gym & Bodybuilding"} /></TableCell>
-                    <TableCell>{new Date(c.subscriptionStart).toLocaleDateString()}</TableCell>
-                    <TableCell>{new Date(c.subscriptionEnd).toLocaleDateString()}</TableCell>
+                    <TableCell className="hidden sm:table-cell"><StatusBadge status={c.subscriptionType} /></TableCell>
+                    <TableCell className="hidden xl:table-cell"><StatusBadge status={c.trainingAccess ?? "Gym & Bodybuilding"} /></TableCell>
+                    <TableCell className="hidden lg:table-cell">{new Date(c.subscriptionStart).toLocaleDateString()}</TableCell>
+                    <TableCell className="hidden md:table-cell">{new Date(c.subscriptionEnd).toLocaleDateString()}</TableCell>
                     <TableCell>
                       <span className={days < 0 ? "text-rose-600 font-semibold" : days <= 5 ? "text-amber-700 font-semibold" : "text-emerald-700 font-semibold"}>
                         {t(days < 0 ? "subscriptions.overdue" : "subscriptions.days").replace("{days}", String(days < 0 ? Math.abs(days) : days))}
                       </span>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden xl:table-cell">
                       <div className="flex flex-col gap-1">
                         <StatusBadge status={assStatus} />
                         <span className="text-xs text-muted-foreground">

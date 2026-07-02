@@ -90,6 +90,7 @@ const dictionary: Dictionary = {
   "common.target": { en: "Target", fr: "Objectif" },
   "common.unknown": { en: "Unknown", fr: "Inconnu" },
   "common.deleting": { en: "Deleting...", fr: "Suppression..." },
+  "common.moreOptions": { en: "More options", fr: "Plus d'options" },
   "clients.title": { en: "Clients", fr: "Clients" },
   "clients.description": { en: "Manage members, subscriptions and contact details.", fr: "Gérez les membres, les abonnements et les coordonnées." },
   "clients.add": { en: "Add client", fr: "Ajouter un client" },

@@ -113,7 +113,7 @@ function PaymentsPage() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard label={t("payments.thisMonth")} value={formatCurrency(monthlyEarnings, currency)} icon={Calendar} variant="brand" />
-        <StatCard label={t("payments.thisYear")} value={formatCurrency(annualEarnings, currency)} icon={TrendingUp} variant="warning" />
+        <StatCard label={t("payments.thisYear")} value={formatCurrency(annualEarnings, currency)} icon={TrendingUp} />
         <StatCard label={t("payments.totalPayments")} value={payments.length} icon={DollarSign} />
       </div>
 
@@ -124,9 +124,9 @@ function PaymentsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>{t("common.client")}</TableHead>
-                <TableHead>{t("common.date")}</TableHead>
-                <TableHead>{t("payments.period")}</TableHead>
-                <TableHead>{t("common.method")}</TableHead>
+                <TableHead className="hidden sm:table-cell">{t("common.date")}</TableHead>
+                <TableHead className="hidden lg:table-cell">{t("payments.period")}</TableHead>
+                <TableHead className="hidden md:table-cell">{t("common.method")}</TableHead>
                 <TableHead>{t("common.status")}</TableHead>
                 <TableHead className="text-right">{t("common.amount")}</TableHead>
               </TableRow>
@@ -142,11 +142,11 @@ function PaymentsPage() {
                   <TableCell className="font-medium">
                     {clientMap.get(p.clientId)?.fullName ?? p.clientName ?? "—"}
                   </TableCell>
-                  <TableCell>{new Date(p.date).toLocaleDateString()}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
+                  <TableCell className="hidden sm:table-cell">{new Date(p.date).toLocaleDateString()}</TableCell>
+                  <TableCell className="hidden text-xs text-muted-foreground lg:table-cell">
                     {new Date(p.periodStart).toLocaleDateString()} → {new Date(p.periodEnd).toLocaleDateString()}
                   </TableCell>
-                  <TableCell>{p.method}</TableCell>
+                  <TableCell className="hidden md:table-cell">{p.method}</TableCell>
                   <TableCell><StatusBadge status={p.status} /></TableCell>
                   <TableCell className="text-right font-bold">{formatCurrency(p.amount, currency)}</TableCell>
                 </TableRow>

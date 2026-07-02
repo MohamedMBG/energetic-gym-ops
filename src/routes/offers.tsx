@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2, BadgePercent, Users, DollarSign, Trophy } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { PageHeader } from "@/components/PageHeader";
@@ -163,10 +163,10 @@ function OffersPage() {
       />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label={t("offers.activeOffers")} value={activeOffers} icon={Plus} variant="brand" hint={t("offers.currentlyRunning")} />
-        <StatCard label={t("offers.offerSubscribers")} value={offerSubscribers} icon={Plus} hint={t("offers.clientsAssigned")} />
-        <StatCard label={t("offers.offerRevenue")} value={formatCurrency(offerRevenue, currency)} icon={Plus} variant="brand" hint={t("offers.paidRevenue")} />
-        <StatCard label={t("offers.bestOffer")} value={bestOffer?.offer.name ?? t("common.none")} icon={Plus} variant="warning" hint={`${bestOffer?.subscribers ?? 0} ${t((bestOffer?.subscribers ?? 0) === 1 ? "dashboard.subscriber" : "dashboard.subscribersPlural")}`} />
+        <StatCard label={t("offers.activeOffers")} value={activeOffers} icon={BadgePercent} variant="brand" hint={t("offers.currentlyRunning")} />
+        <StatCard label={t("offers.offerSubscribers")} value={offerSubscribers} icon={Users} hint={t("offers.clientsAssigned")} />
+        <StatCard label={t("offers.offerRevenue")} value={formatCurrency(offerRevenue, currency)} icon={DollarSign} variant="brand" hint={t("offers.paidRevenue")} />
+        <StatCard label={t("offers.bestOffer")} value={bestOffer?.offer.name ?? t("common.none")} icon={Trophy} hint={`${bestOffer?.subscribers ?? 0} ${t((bestOffer?.subscribers ?? 0) === 1 ? "dashboard.subscriber" : "dashboard.subscribersPlural")}`} />
       </div>
 
       <Card className="rounded-2xl border-0 p-5 shadow-soft">
@@ -176,11 +176,11 @@ function OffersPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>{t("common.offer")}</TableHead>
-                <TableHead>{t("common.status")}</TableHead>
-                <TableHead>{t("common.discount")}</TableHead>
+                <TableHead className="hidden sm:table-cell">{t("common.status")}</TableHead>
+                <TableHead className="hidden lg:table-cell">{t("common.discount")}</TableHead>
                 <TableHead>{t("common.subscribers")}</TableHead>
                 <TableHead>{t("common.revenue")}</TableHead>
-                <TableHead>{t("common.health")}</TableHead>
+                <TableHead className="hidden md:table-cell">{t("common.health")}</TableHead>
                 <TableHead className="text-right">{t("common.actions")}</TableHead>
               </TableRow>
             </TableHeader>
@@ -196,8 +196,8 @@ function OffersPage() {
                     <div className="font-semibold">{offer.name}</div>
                     <div className="max-w-md truncate text-xs text-muted-foreground">{offer.description || t("common.noDescription")}</div>
                   </TableCell>
-                  <TableCell><StatusBadge status={offer.status} /></TableCell>
-                  <TableCell>{offer.discountPercent}%</TableCell>
+                  <TableCell className="hidden sm:table-cell"><StatusBadge status={offer.status} /></TableCell>
+                  <TableCell className="hidden lg:table-cell">{offer.discountPercent}%</TableCell>
                   <TableCell>
                     <div className="font-semibold">{subscribers} / {offer.targetSubscriptions || "-"}</div>
                     <div className="mt-1 h-1.5 w-28 overflow-hidden rounded-full bg-muted">
@@ -205,7 +205,7 @@ function OffersPage() {
                     </div>
                   </TableCell>
                   <TableCell className="font-semibold">{formatCurrency(revenue, currency)}</TableCell>
-                  <TableCell>
+                  <TableCell className="hidden md:table-cell">
                     <span className={health === "Going well" ? "font-semibold text-emerald-700" : health === "Needs push" ? "font-semibold text-amber-700" : "font-semibold text-rose-700"}>
                       {t(`health.${health}`)}
                     </span>
