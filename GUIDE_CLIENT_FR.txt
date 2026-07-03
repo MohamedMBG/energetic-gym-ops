@@ -1,0 +1,100 @@
+===========================================================
+   SYSTÈME DE GESTION DE SALLE DE SPORT
+   GUIDE D'INSTALLATION SIMPLE (Windows)
+===========================================================
+
+Vous n'avez AUCUN outil de programmation à installer.
+Un seul programme gratuit est nécessaire : Docker Desktop.
+
+
+-----------------------------------------------------------
+ÉTAPE 1 — INSTALLER DOCKER DESKTOP (une seule fois)
+-----------------------------------------------------------
+1. Ouvrez ce lien dans votre navigateur :
+   https://www.docker.com/products/docker-desktop/
+2. Cliquez sur « Download for Windows » et installez le programme.
+3. Redémarrez l'ordinateur si Windows le demande.
+4. Ouvrez « Docker Desktop » depuis le menu Démarrer.
+5. Attendez que l'icône de la baleine indique « Running »
+   (en marche). C'est prêt.
+
+
+-----------------------------------------------------------
+ÉTAPE 2 — TÉLÉCHARGER LE PROJET DEPUIS GITHUB
+-----------------------------------------------------------
+1. Ouvrez ce lien :
+   https://github.com/MohamedMBG/energetic-gym-ops
+2. Cliquez sur le bouton vert « Code ».
+3. Cliquez sur « Download ZIP ».
+4. Le fichier « energetic-gym-ops-main.zip » se télécharge.
+
+
+-----------------------------------------------------------
+ÉTAPE 3 — EXTRAIRE LE DOSSIER
+-----------------------------------------------------------
+1. Allez dans votre dossier « Téléchargements ».
+2. Faites un clic droit sur le fichier ZIP.
+3. Choisissez « Extraire tout... » puis « Extraire ».
+4. Ouvrez le dossier extrait. Vous devez y voir des fichiers
+   comme START_SYSTEM.bat et STOP_SYSTEM.bat.
+
+
+-----------------------------------------------------------
+ÉTAPE 4 — DÉMARRER LE SYSTÈME
+-----------------------------------------------------------
+1. Vérifiez que Docker Desktop est ouvert et « Running ».
+2. Double-cliquez sur : START_SYSTEM.bat
+3. LA PREMIÈRE FOIS, la préparation peut prendre quelques
+   minutes. Patientez et laissez la fenêtre noire ouverte.
+4. Quand c'est prêt, votre navigateur s'ouvre tout seul.
+
+   Adresse du site :   http://localhost:5173
+   E-mail :            admin@gym.local
+   Mot de passe :      admin12345
+
+   (Vous pourrez changer le mot de passe dans l'application.)
+
+
+-----------------------------------------------------------
+ÉTAPE 5 — ARRÊTER LE SYSTÈME
+-----------------------------------------------------------
+- Double-cliquez sur : STOP_SYSTEM.bat
+- Vos données sont conservées, rien n'est supprimé.
+- Pour reprendre plus tard : double-cliquez sur START_SYSTEM.bat.
+
+
+-----------------------------------------------------------
+ÉTAPE 6 — RÉINITIALISER LA BASE DE DONNÉES (tout effacer)
+-----------------------------------------------------------
+- Double-cliquez sur : RESET_DATABASE.bat
+- Le programme vous demande de taper  YES  pour confirmer.
+- ATTENTION : cela supprime DÉFINITIVEMENT toutes les données
+  (clients, paiements, abonnements...) et repart de zéro.
+- À utiliser seulement si vous voulez tout remettre à neuf.
+
+
+-----------------------------------------------------------
+ÉTAPE 7 — EN CAS DE PROBLÈME
+-----------------------------------------------------------
+- Message « Docker is not running » :
+    Ouvrez Docker Desktop, attendez « Running »,
+    puis double-cliquez à nouveau sur START_SYSTEM.bat.
+
+- La page ne s'ouvre pas tout de suite :
+    Attendez 30 secondes et actualisez la page (touche F5).
+    Le premier démarrage est le plus lent.
+
+- La page ne s'ouvre toujours pas :
+    Ouvrez votre navigateur et tapez vous-même :
+    http://localhost:5173
+
+
+-----------------------------------------------------------
+RÉSUMÉ RAPIDE
+-----------------------------------------------------------
+Télécharger -> https://github.com/MohamedMBG/energetic-gym-ops (Code > Download ZIP)
+Démarrer    -> START_SYSTEM.bat
+Arrêter     -> STOP_SYSTEM.bat
+Réinitialiser -> RESET_DATABASE.bat
+Ouvrir      -> http://localhost:5173
+===========================================================
