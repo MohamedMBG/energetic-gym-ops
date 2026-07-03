@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const currentFile = fileURLToPath(import.meta.url);
 const rootDir = path.resolve(path.dirname(currentFile), '..');
@@ -37,7 +37,14 @@ function parseEnvFile(filePath) {
     const eqIndex = trimmed.indexOf('=');
     if (eqIndex === -1) continue;
     const key = trimmed.slice(0, eqIndex).trim();
-    const value = trimmed.slice(eqIndex + 1).trim();
+    let value = trimmed.slice(eqIndex + 1).trim();
+    if (
+      value.length >= 2 &&
+      ((value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'")))
+    ) {
+      value = value.slice(1, -1);
+    }
     env[key] = value;
   }
   return env;
@@ -295,7 +302,8 @@ async function ensureOwnerAccount(psqlPath, databaseUrl) {
     return { created: false, owner };
   }
 
-  const { default: bcrypt } = await import(path.join(backendDir, 'node_modules', 'bcryptjs', 'index.js'));
+  const bcryptPath = path.join(backendDir, 'node_modules', 'bcryptjs', 'index.js');
+  const { default: bcrypt } = await import(pathToFileURL(bcryptPath).href);
   const gymId = randomUUID();
   const userId = randomUUID();
   const passwordHash = await bcrypt.hash(owner.password, 10);
