@@ -1,0 +1,17 @@
+node_modules
+backend
+dist
+dist-ssr
+.output
+.nitro
+.vercel
+.vinxi
+.tanstack
+.wrangler
+.git
+.agents
+.codex-runlogs
+.lovable
+*.log
+.env
+*.local

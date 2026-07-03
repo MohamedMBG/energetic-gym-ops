@@ -1,0 +1,53 @@
+# Local one-click stack for the gym management system.
+# Client only needs Docker Desktop; everything else runs in containers.
+# All values have sane defaults, so a missing .env still works.
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: gym-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-gym}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-gym_local_password}
+      POSTGRES_DB: ${POSTGRES_DB:-gym_ops}
+    volumes:
+      - gym-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-gym} -d ${POSTGRES_DB:-gym_ops}"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
+  backend:
+    build: ./backend
+    container_name: gym-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Backend reaches the DB by the compose service name "db", never localhost.
+      DATABASE_URL: postgresql://${POSTGRES_USER:-gym}:${POSTGRES_PASSWORD:-gym_local_password}@db:5432/${POSTGRES_DB:-gym_ops}
+      JWT_SECRET: ${JWT_SECRET:-change-me-local-dev-secret}
+      NODE_ENV: production
+      FRONTEND_URL: http://localhost:${FRONTEND_PORT:-5173}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@gym.local}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin12345}
+      ADMIN_GYM_NAME: ${ADMIN_GYM_NAME:-My Gym}
+    ports:
+      - "${BACKEND_PORT:-3001}:3001"
+
+  frontend:
+    build: .
+    container_name: gym-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      # Browser (host) talks to the backend on localhost, not the "backend" service name.
+      VITE_API_URL: http://localhost:${BACKEND_PORT:-3001}
+    ports:
+      - "${FRONTEND_PORT:-5173}:5173"
+
+volumes:
+  gym-db-data:
