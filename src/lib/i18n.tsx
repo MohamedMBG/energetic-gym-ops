@@ -171,7 +171,7 @@ const dictionary: Dictionary = {
   "settings.dangerZone": { en: "Danger zone", fr: "Zone dangereuse" },
   "settings.signOutDescription": { en: "Sign out of your account.", fr: "Deconnectez-vous de votre compte." },
   "login.signIn": { en: "Sign in", fr: "Connexion" },
-  "login.subtitle": { en: "7up Gym Management", fr: "Gestion 7up Gym" },
+  "login.subtitle": { en: "Seven Gym Management", fr: "Gestion Seven Gym" },
   "login.signingIn": { en: "Signing in...", fr: "Connexion..." },
   "login.firstTime": { en: "First time?", fr: "Premiere fois ?" },
   "login.setupGym": { en: "Set up your gym", fr: "Configurer votre salle" },

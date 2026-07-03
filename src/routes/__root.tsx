@@ -12,6 +12,7 @@ import appCss from "../styles.css?url";
 import { AppLayout } from "@/components/AppLayout";
 import { Toaster } from "@/components/ui/sonner";
 import { I18nProvider, useI18n } from "@/lib/i18n";
+import logoUrl from "@/assets/business-logo.png";
 
 function NotFoundComponent() {
   const { t } = useI18n();
@@ -77,10 +78,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "7up Gym — Subscription Management" },
+      { title: "Seven Gym - Subscription Management" },
       { name: "description", content: "Modern gym subscription management dashboard for clients, payments and reminders." },
-      { name: "author", content: "7up Gym" },
-      { property: "og:title", content: "7up Gym — Subscription Management" },
+      { name: "author", content: "Seven Gym" },
+      { property: "og:title", content: "Seven Gym - Subscription Management" },
       { property: "og:description", content: "Manage clients, subscriptions, payments and reminders in one place." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -90,6 +91,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         rel: "stylesheet",
         href: appCss,
+      },
+      {
+        rel: "icon",
+        href: logoUrl,
       },
     ],
   }),

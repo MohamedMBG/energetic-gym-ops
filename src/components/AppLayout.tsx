@@ -3,6 +3,7 @@ import { Menu, Bell } from "lucide-react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { AppSidebar } from "./AppSidebar";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
+import { BusinessLogo } from "@/components/BusinessLogo";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 
@@ -41,9 +42,6 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   }
 
   if (isError || !auth) return null;
-
-  const displayName = auth.user.email.split("@")[0];
-  const initials = displayName.slice(0, 2).toUpperCase();
 
   return (
     <div className="flex min-h-screen w-full bg-background">
@@ -92,9 +90,7 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
               <div className="text-sm font-semibold">{auth.gym.name}</div>
               <div className="text-xs text-muted-foreground">{auth.user.email}</div>
             </div>
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-brand text-sm font-bold text-white">
-              {initials}
-            </div>
+            <BusinessLogo className="h-10 w-10 rounded-full" />
           </div>
         </header>
 

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { BusinessLogo } from "@/components/BusinessLogo";
 import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/setup")({
@@ -36,9 +37,7 @@ function SetupPage() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <Card className="w-full max-w-sm rounded-2xl border-0 p-8 shadow-soft">
         <div className="mb-8 text-center">
-          <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-brand text-xl font-extrabold text-white">
-            7
-          </div>
+          <BusinessLogo className="mx-auto h-20 w-20 rounded-2xl" />
           <h1 className="mt-4 text-2xl font-bold">{t("setup.title")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {t("setup.description")}
@@ -57,7 +56,7 @@ function SetupPage() {
             <Input
               value={form.gymName}
               onChange={(e) => setForm({ ...form, gymName: e.target.value })}
-              placeholder="7up Gym"
+              placeholder="Seven Gym"
               required
             />
           </div>

@@ -10,10 +10,10 @@ import {
   Mail,
   BarChart3,
   Settings as SettingsIcon,
-  Dumbbell,
   LogOut,
 } from "lucide-react";
 import { api, clearAuthToken } from "@/lib/api";
+import { BusinessLogo } from "@/components/BusinessLogo";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -37,12 +37,10 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <aside className="flex h-full w-64 flex-col border-r border-sidebar-border bg-sidebar">
       <div className="flex items-center gap-3 px-6 py-6">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-brand-strong shadow-glow">
-          <Dumbbell className="h-5 w-5 text-white" strokeWidth={2.5} />
-        </div>
+        <BusinessLogo className="h-12 w-12 shrink-0" />
         <div>
           <div className="text-lg font-extrabold tracking-tight">
-            <span className="text-gradient-brand">7up</span> Gym
+            <span className="text-gradient-brand">Seven</span> Gym
           </div>
           <div className="text-[11px] uppercase tracking-widest text-muted-foreground">
             {t("app.adminSuite")}
