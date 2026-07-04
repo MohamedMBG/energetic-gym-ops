@@ -11,7 +11,7 @@ export function BusinessLogo({ className, imageClassName }: BusinessLogoProps) {
     <div className={cn("flex items-center justify-center overflow-hidden rounded-2xl bg-white/20 p-1.5 shadow-glow ring-1 ring-black/5 backdrop-blur-md", className)}>
       <img
         src={logoUrl}
-        alt="Seven Gym logo"
+        alt="Seven Up Gym logo"
         className={cn("h-full w-full object-contain", imageClassName)}
       />
     </div>

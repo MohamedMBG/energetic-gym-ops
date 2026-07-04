@@ -56,7 +56,7 @@ function SetupPage() {
             <Input
               value={form.gymName}
               onChange={(e) => setForm({ ...form, gymName: e.target.value })}
-              placeholder="Seven Gym"
+              placeholder="Seven Up Gym"
               required
             />
           </div>

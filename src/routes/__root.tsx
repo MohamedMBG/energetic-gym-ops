@@ -79,10 +79,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Seven Gym - Subscription Management" },
+      { title: "Seven Up Gym - Subscription Management" },
       { name: "description", content: "Modern gym subscription management dashboard for clients, payments and reminders." },
-      { name: "author", content: "Seven Gym" },
-      { property: "og:title", content: "Seven Gym - Subscription Management" },
+      { name: "author", content: "Seven Up Gym" },
+      { property: "og:title", content: "Seven Up Gym - Subscription Management" },
       { property: "og:description", content: "Manage clients, subscriptions, payments and reminders in one place." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
