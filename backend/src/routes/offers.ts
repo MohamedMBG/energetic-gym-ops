@@ -3,12 +3,13 @@ import { z } from 'zod';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../db';
 import { clients, offers } from '../db/schema';
-import { requireAuth } from '../middleware/auth';
+import { requireAuth, requirePermission } from '../middleware/auth';
 import { validateBody } from '../middleware/validate';
 import { ok, notFound } from '../lib/errors';
+import { logActivity } from '../lib/activity';
 
 const router = Router();
-router.use(requireAuth);
+router.use(requireAuth, requirePermission('offers'));
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD');
 
@@ -53,6 +54,7 @@ router.post('/', validateBody(createOfferSchema), async (req, res) => {
     })
     .returning();
 
+  logActivity(req.user.gymId, req.user.userId, 'offer_created', { type: 'offer', id: offer.id });
   ok(res, offer, 201);
 });
 
@@ -70,6 +72,7 @@ router.put('/:id', validateBody(updateOfferSchema), async (req, res) => {
     return;
   }
 
+  logActivity(req.user.gymId, req.user.userId, 'offer_updated', { type: 'offer', id: req.params.id });
   ok(res, updated);
 });
 
@@ -93,6 +96,7 @@ router.delete('/:id', async (req, res) => {
     return;
   }
 
+  logActivity(req.user.gymId, req.user.userId, 'offer_deleted', { type: 'offer', id: req.params.id });
   res.status(204).send();
 });
 

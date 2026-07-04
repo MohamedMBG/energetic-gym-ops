@@ -87,6 +87,50 @@ export interface ReminderLog {
   dueDate: string;
 }
 
+export const PERMISSIONS = [
+  "clients",
+  "payments",
+  "packs",
+  "offers",
+  "equipment",
+  "reports",
+  "settings",
+  "staff",
+] as const;
+
+export type Permission = (typeof PERMISSIONS)[number];
+
+export interface Role {
+  id: string;
+  name: string;
+  permissions: Permission[];
+}
+
+export interface StaffMember {
+  id: string;
+  email: string;
+  fullName: string;
+  roleId: string | null;
+  roleName: string | null;
+  isOwner: boolean;
+  active: boolean;
+}
+
+export interface StaffPerformance {
+  id: string;
+  fullName: string;
+  email: string;
+  isOwner: boolean;
+  clientsHandled: number;
+  paymentsCollected: number;
+  revenueCollected: number;
+  loginCount: number;
+  lastLoginAt: string | null;
+  onlineMinutes: number;
+  totalActions: number;
+  actionsBreakdown: Record<string, number>;
+}
+
 export interface Settings {
   gymName: string;
   monthlyPrice: number;

@@ -3,12 +3,13 @@ import { z } from 'zod';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../db';
 import { clients, gyms, subscriptionPlans } from '../db/schema';
-import { requireAuth } from '../middleware/auth';
+import { requireAuth, requirePermission } from '../middleware/auth';
 import { validateBody } from '../middleware/validate';
 import { ok, notFound } from '../lib/errors';
+import { logActivity } from '../lib/activity';
 
 const router = Router();
-router.use(requireAuth);
+router.use(requireAuth, requirePermission('packs'));
 
 const packSchema = z.object({
   name: z.string().trim().min(2).max(100),
@@ -156,6 +157,7 @@ router.post('/', validateBody(packSchema), async (req, res) => {
     })
     .returning();
 
+  logActivity(req.user.gymId, req.user.userId, 'pack_created', { type: 'pack', id: pack.id });
   ok(res, pack, 201);
 });
 
@@ -173,6 +175,7 @@ router.put('/:id', validateBody(updatePackSchema), async (req, res) => {
     return;
   }
 
+  logActivity(req.user.gymId, req.user.userId, 'pack_updated', { type: 'pack', id: req.params.id });
   ok(res, updated);
 });
 
@@ -196,6 +199,7 @@ router.delete('/:id', async (req, res) => {
     return;
   }
 
+  logActivity(req.user.gymId, req.user.userId, 'pack_deleted', { type: 'pack', id: req.params.id });
   res.status(204).send();
 });
 

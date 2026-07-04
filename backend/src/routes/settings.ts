@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { eq } from 'drizzle-orm';
 import { db } from '../db';
 import { gyms } from '../db/schema';
-import { requireAuth } from '../middleware/auth';
+import { requireAuth, requirePermission } from '../middleware/auth';
 import { validateBody } from '../middleware/validate';
 import { ok, notFound, badRequest } from '../lib/errors';
 
@@ -33,7 +33,7 @@ router.get('/', async (req, res) => {
 });
 
 // PUT /api/settings
-router.put('/', validateBody(updateSettingsSchema), async (req, res) => {
+router.put('/', requirePermission('settings'), validateBody(updateSettingsSchema), async (req, res) => {
   const data = req.body as UpdateSettings;
 
   if (Object.keys(data).length === 0) {

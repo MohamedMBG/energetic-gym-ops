@@ -3,12 +3,13 @@ import { z } from 'zod';
 import { eq, and, ilike } from 'drizzle-orm';
 import { db } from '../db';
 import { clients } from '../db/schema';
-import { requireAuth } from '../middleware/auth';
+import { requireAuth, requirePermission } from '../middleware/auth';
 import { validateBody } from '../middleware/validate';
 import { ok, notFound } from '../lib/errors';
+import { logActivity } from '../lib/activity';
 
 const router = Router();
-router.use(requireAuth);
+router.use(requireAuth, requirePermission('clients'));
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD');
 
@@ -74,11 +75,13 @@ router.post('/', validateBody(createClientSchema), async (req, res) => {
       assuranceEnd: data.assuranceEnd ?? null,
       offerId: data.offerId ?? null,
       lastPaymentDate: data.lastPaymentDate ?? null,
+      staffId: req.user.userId,
       createdAt: now,
       updatedAt: now,
     })
     .returning();
 
+  logActivity(req.user.gymId, req.user.userId, 'client_created', { type: 'client', id: client.id });
   ok(res, client, 201);
 });
 
@@ -120,6 +123,7 @@ router.put('/:id', validateBody(updateClientSchema), async (req, res) => {
     .where(and(eq(clients.id, req.params.id), eq(clients.gymId, gymId)))
     .returning();
 
+  logActivity(gymId, req.user.userId, 'client_updated', { type: 'client', id: req.params.id });
   ok(res, updated);
 });
 
@@ -137,6 +141,7 @@ router.delete('/:id', async (req, res) => {
     return;
   }
 
+  logActivity(gymId, req.user.userId, 'client_deleted', { type: 'client', id: req.params.id });
   res.status(204).send();
 });
 

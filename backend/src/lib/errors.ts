@@ -30,6 +30,10 @@ export function unauthorized(res: Response, message = 'Unauthorized'): void {
   res.status(401).json(errorBody(message));
 }
 
+export function forbidden(res: Response, message = 'Forbidden'): void {
+  res.status(403).json(errorBody(message));
+}
+
 export function notFound(res: Response, message = 'Not found'): void {
   res.status(404).json(errorBody(message));
 }

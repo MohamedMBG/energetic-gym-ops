@@ -3,12 +3,13 @@ import { z } from 'zod';
 import { eq, and } from 'drizzle-orm';
 import { db } from '../db';
 import { payments, clients } from '../db/schema';
-import { requireAuth } from '../middleware/auth';
+import { requireAuth, requirePermission } from '../middleware/auth';
 import { validateBody } from '../middleware/validate';
 import { ok, notFound, AppError } from '../lib/errors';
+import { logActivity } from '../lib/activity';
 
 const router = Router();
-router.use(requireAuth);
+router.use(requireAuth, requirePermission('payments'));
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD');
 
@@ -62,7 +63,7 @@ router.post('/', validateBody(createPaymentSchema), async (req, res) => {
 
     [createdPayment] = await tx
       .insert(payments)
-      .values({ id: crypto.randomUUID(), gymId, ...data })
+      .values({ id: crypto.randomUUID(), gymId, staffId: req.user.userId, ...data })
       .returning();
 
     if (data.status === 'Paid') {
@@ -78,6 +79,7 @@ router.post('/', validateBody(createPaymentSchema), async (req, res) => {
     }
   });
 
+  logActivity(gymId, req.user.userId, 'payment_recorded', { type: 'payment', id: createdPayment!.id });
   ok(res, createdPayment!, 201);
 });
 
@@ -112,6 +114,7 @@ router.delete('/:id', async (req, res) => {
     return;
   }
 
+  logActivity(gymId, req.user.userId, 'payment_deleted', { type: 'payment', id: req.params.id });
   res.status(204).send();
 });
 

@@ -3,12 +3,13 @@ import { z } from 'zod';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../db';
 import { equipment } from '../db/schema';
-import { requireAuth } from '../middleware/auth';
+import { requireAuth, requirePermission } from '../middleware/auth';
 import { validateBody } from '../middleware/validate';
 import { ok, notFound } from '../lib/errors';
+import { logActivity } from '../lib/activity';
 
 const router = Router();
-router.use(requireAuth);
+router.use(requireAuth, requirePermission('equipment'));
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD');
 const optionalDate = isoDate.nullable().optional();
@@ -57,6 +58,7 @@ router.post('/', validateBody(equipmentSchema), async (req, res) => {
     })
     .returning();
 
+  logActivity(req.user.gymId, req.user.userId, 'equipment_created', { type: 'equipment', id: item.id });
   ok(res, item, 201);
 });
 
@@ -79,6 +81,7 @@ router.put('/:id', validateBody(updateEquipmentSchema), async (req, res) => {
     return;
   }
 
+  logActivity(req.user.gymId, req.user.userId, 'equipment_updated', { type: 'equipment', id: req.params.id });
   ok(res, updated);
 });
 
@@ -93,6 +96,7 @@ router.delete('/:id', async (req, res) => {
     return;
   }
 
+  logActivity(req.user.gymId, req.user.userId, 'equipment_deleted', { type: 'equipment', id: req.params.id });
   res.status(204).send();
 });
 

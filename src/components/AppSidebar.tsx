@@ -10,29 +10,37 @@ import {
   Mail,
   BarChart3,
   Settings as SettingsIcon,
+  UserCog,
   LogOut,
 } from "lucide-react";
 import { api, clearAuthToken } from "@/lib/api";
 import { BusinessLogo } from "@/components/BusinessLogo";
+import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import type { Permission } from "@/lib/types";
 
 const items = [
-  { to: "/", labelKey: "nav.dashboard", icon: LayoutDashboard },
-  { to: "/clients", labelKey: "nav.clients", icon: Users },
-  { to: "/subscriptions", labelKey: "nav.subscriptions", icon: CalendarClock },
-  { to: "/packs", labelKey: "nav.packs", icon: Package },
-  { to: "/offers", labelKey: "nav.offers", icon: BadgePercent },
-  { to: "/equipment", labelKey: "nav.equipment", icon: Wrench },
-  { to: "/payments", labelKey: "nav.payments", icon: CreditCard },
-  { to: "/reminders", labelKey: "nav.reminders", icon: Mail },
-  { to: "/reports", labelKey: "nav.reports", icon: BarChart3 },
-  { to: "/settings", labelKey: "nav.settings", icon: SettingsIcon },
-] as const;
+  { to: "/", labelKey: "nav.dashboard", icon: LayoutDashboard, permission: null },
+  { to: "/clients", labelKey: "nav.clients", icon: Users, permission: "clients" },
+  { to: "/subscriptions", labelKey: "nav.subscriptions", icon: CalendarClock, permission: "clients" },
+  { to: "/packs", labelKey: "nav.packs", icon: Package, permission: "packs" },
+  { to: "/offers", labelKey: "nav.offers", icon: BadgePercent, permission: "offers" },
+  { to: "/equipment", labelKey: "nav.equipment", icon: Wrench, permission: "equipment" },
+  { to: "/payments", labelKey: "nav.payments", icon: CreditCard, permission: "payments" },
+  { to: "/reminders", labelKey: "nav.reminders", icon: Mail, permission: "clients" },
+  { to: "/reports", labelKey: "nav.reports", icon: BarChart3, permission: "reports" },
+  { to: "/staff", labelKey: "nav.staff", icon: UserCog, permission: "staff" },
+  { to: "/settings", labelKey: "nav.settings", icon: SettingsIcon, permission: "settings" },
+] satisfies { to: string; labelKey: string; icon: typeof LayoutDashboard; permission: Permission | null }[];
 
 export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { t } = useI18n();
+  const { data: auth } = useAuth();
+  const visibleItems = items.filter(
+    (it) => !it.permission || auth?.user.isOwner || auth?.user.permissions.includes(it.permission),
+  );
 
   return (
     <aside className="flex h-full w-64 flex-col border-r border-sidebar-border bg-sidebar">
@@ -49,7 +57,7 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
       </div>
 
       <nav className="flex-1 space-y-1 px-3">
-        {items.map((it) => {
+        {visibleItems.map((it) => {
           const active = pathname === it.to;
           const Icon = it.icon;
           return (

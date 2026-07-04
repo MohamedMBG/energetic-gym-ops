@@ -13,6 +13,7 @@ import settingsRoutes from './routes/settings';
 import offerRoutes from './routes/offers';
 import packRoutes from './routes/packs';
 import equipmentRoutes from './routes/equipment';
+import staffRoutes from './routes/staff';
 import healthRoutes from './routes/health';
 import { ensureAdminAccount } from './lib/admin-bootstrap';
 
@@ -80,6 +81,7 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/offers', offerRoutes);
 app.use('/api/packs', packRoutes);
 app.use('/api/equipment', equipmentRoutes);
+app.use('/api/staff', staffRoutes);
 
 // Global error handler — handles AppError (typed HTTP errors) and unexpected crashes.
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

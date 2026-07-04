@@ -10,6 +10,21 @@ export const gyms = pgTable('gyms', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
 });
 
+export const roles = pgTable(
+  'roles',
+  {
+    id: text('id').primaryKey(),
+    gymId: text('gym_id')
+      .notNull()
+      .references(() => gyms.id),
+    name: text('name').notNull(),
+    permissions: text('permissions').array().notNull().default([]),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (table) => [index('roles_gym_id_idx').on(table.gymId)],
+);
+
 export const users = pgTable('users', {
   id: text('id').primaryKey(),
   gymId: text('gym_id')
@@ -17,6 +32,10 @@ export const users = pgTable('users', {
     .references(() => gyms.id),
   email: text('email').unique().notNull(),
   passwordHash: text('password_hash').notNull(),
+  fullName: text('full_name').notNull().default(''),
+  // null roleId = Owner: full access, cannot be deactivated/deleted via the app
+  roleId: text('role_id').references(() => roles.id),
+  active: integer('active').notNull().default(1),
   createdAt: timestamp('created_at').notNull().defaultNow(),
 });
 
@@ -118,12 +137,14 @@ export const clients = pgTable(
     lastPaymentDate: text('last_payment_date'),
     amountPaid: real('amount_paid').notNull().default(0),
     notes: text('notes').notNull().default(''),
+    staffId: text('staff_id').references(() => users.id), // staff member who registered/manages this client
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow(),
   },
   (table) => [
     index('clients_gym_id_idx').on(table.gymId),
     index('clients_full_name_idx').on(table.fullName),
+    index('clients_staff_id_idx').on(table.staffId),
   ],
 );
 
@@ -143,12 +164,38 @@ export const payments = pgTable(
     periodEnd: text('period_end').notNull(),
     method: text('method').notNull(), // 'Cash' | 'Card' | 'Bank transfer'
     status: text('status').notNull(), // 'Paid' | 'Unpaid'
+    staffId: text('staff_id').references(() => users.id), // staff member who collected/recorded this payment
     createdAt: timestamp('created_at').notNull().defaultNow(),
   },
   (table) => [
     index('payments_gym_id_idx').on(table.gymId),
     index('payments_client_id_idx').on(table.clientId),
     index('payments_gym_client_idx').on(table.gymId, table.clientId),
+    index('payments_staff_id_idx').on(table.staffId),
+  ],
+);
+
+// Audit trail: one row per staff action (login, logout, record created/updated/deleted).
+// Powers the staff performance view (login activity + actions taken).
+export const activityLogs = pgTable(
+  'activity_logs',
+  {
+    id: text('id').primaryKey(),
+    gymId: text('gym_id')
+      .notNull()
+      .references(() => gyms.id),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id),
+    action: text('action').notNull(), // 'login' | 'logout' | 'client_created' | 'payment_recorded' | ...
+    entityType: text('entity_type'),
+    entityId: text('entity_id'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (table) => [
+    index('activity_logs_gym_id_idx').on(table.gymId),
+    index('activity_logs_user_id_idx').on(table.userId),
+    index('activity_logs_gym_user_idx').on(table.gymId, table.userId),
   ],
 );
 

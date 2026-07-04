@@ -1,10 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from './api';
+import type { Permission } from './types';
 
 export interface AuthUser {
   id: string;
   email: string;
   gymId: string;
+  fullName: string;
+  roleId: string | null;
+  roleName: string | null;
+  isOwner: boolean;
+  permissions: Permission[];
 }
 
 export interface AuthGym {
@@ -32,4 +38,10 @@ export function useAuth() {
     retry: false,
     staleTime: 5 * 60 * 1000,
   });
+}
+
+export function useHasPermission(permission: Permission): boolean {
+  const { data } = useAuth();
+  if (!data) return false;
+  return data.user.isOwner || data.user.permissions.includes(permission);
 }

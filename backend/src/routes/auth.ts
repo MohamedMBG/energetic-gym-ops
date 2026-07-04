@@ -2,12 +2,13 @@ import { Router, CookieOptions, Request } from 'express';
 import { z } from 'zod';
 import { eq } from 'drizzle-orm';
 import { db } from '../db';
-import { users, gyms } from '../db/schema';
+import { users, gyms, roles } from '../db/schema';
 import { hashPassword, comparePassword } from '../lib/password';
-import { signToken } from '../lib/jwt';
+import { signToken, verifyToken } from '../lib/jwt';
 import { requireAuth } from '../middleware/auth';
 import { validateBody } from '../middleware/validate';
 import { ok, unauthorized, conflict } from '../lib/errors';
+import { logActivity } from '../lib/activity';
 
 const router = Router();
 
@@ -100,13 +101,32 @@ router.post('/login', validateBody(loginSchema), async (req, res) => {
     return;
   }
 
+  if (!user.active) {
+    unauthorized(res, 'This account has been disabled');
+    return;
+  }
+
   const token = signToken({ userId: user.id, gymId: user.gymId });
   res.cookie(COOKIE_NAME, token, cookieOptions(req));
+  logActivity(user.gymId, user.id, 'login');
   ok(res, { message: 'Logged in', token });
 });
 
 // POST /api/auth/logout
 router.post('/logout', (req, res) => {
+  const bearerToken = req.get('authorization')?.startsWith('Bearer ')
+    ? req.get('authorization')!.slice('Bearer '.length)
+    : undefined;
+  const token = bearerToken || (req.cookies?.[COOKIE_NAME] as string | undefined);
+  if (token) {
+    try {
+      const payload = verifyToken(token);
+      logActivity(payload.gymId, payload.userId, 'logout');
+    } catch {
+      // expired/invalid token — nothing to log
+    }
+  }
+
   res.clearCookie(COOKIE_NAME, cookieOptions(req, false));
   ok(res, { message: 'Logged out' });
 });
@@ -114,7 +134,7 @@ router.post('/logout', (req, res) => {
 // GET /api/auth/me — requires auth cookie
 router.get('/me', requireAuth, async (req, res) => {
   const [user] = await db
-    .select({ id: users.id, email: users.email, gymId: users.gymId })
+    .select({ id: users.id, email: users.email, gymId: users.gymId, fullName: users.fullName, roleId: users.roleId })
     .from(users)
     .where(eq(users.id, req.user.userId));
 
@@ -125,7 +145,16 @@ router.get('/me', requireAuth, async (req, res) => {
 
   const [gym] = await db.select().from(gyms).where(eq(gyms.id, req.user.gymId));
 
-  ok(res, { user, gym });
+  let roleName: string | null = null;
+  if (user.roleId) {
+    const [role] = await db.select({ name: roles.name }).from(roles).where(eq(roles.id, user.roleId));
+    roleName = role?.name ?? null;
+  }
+
+  ok(res, {
+    user: { ...user, isOwner: req.user.isOwner, permissions: req.user.permissions, roleName },
+    gym,
+  });
 });
 
 export default router;
