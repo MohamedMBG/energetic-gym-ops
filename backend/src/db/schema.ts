@@ -157,7 +157,7 @@ export const payments = pgTable(
       .references(() => gyms.id),
     clientId: text('client_id')
       .notNull()
-      .references(() => clients.id),
+      .references(() => clients.id, { onDelete: 'cascade' }),
     amount: real('amount').notNull(),
     date: text('date').notNull(), // ISO date string
     periodStart: text('period_start').notNull(),
@@ -206,7 +206,7 @@ export const reminderLogs = pgTable('reminder_logs', {
     .references(() => gyms.id),
   clientId: text('client_id')
     .notNull()
-    .references(() => clients.id),
+    .references(() => clients.id, { onDelete: 'cascade' }),
   email: text('email').notNull(),
   sentAt: text('sent_at').notNull(), // ISO datetime string
   dueDate: text('due_date').notNull(), // ISO date string
