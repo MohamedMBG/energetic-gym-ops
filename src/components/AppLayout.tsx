@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Menu, Bell, Sun, Moon } from "lucide-react";
+import { Menu, Sun, Moon } from "lucide-react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { AppSidebar } from "./AppSidebar";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
@@ -89,11 +89,6 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
             aria-label={t("app.toggleTheme", "Toggle theme")}
           >
             {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-          </button>
-
-          <button className="relative rounded-xl p-2.5 text-muted-foreground hover:bg-accent">
-            <Bell className="h-5 w-5" />
-            <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary" />
           </button>
 
           <div className="hidden items-center gap-3 sm:flex">
