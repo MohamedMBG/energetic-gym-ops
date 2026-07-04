@@ -40,7 +40,7 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
         <BusinessLogo className="h-12 w-12 shrink-0" />
         <div>
           <div className="text-lg font-extrabold tracking-tight">
-            <span className="text-gradient-brand">Seven</span> Gym
+            <span className="text-gradient-brand">Seven Up</span> Gym
           </div>
           <div className="text-[11px] uppercase tracking-widest text-muted-foreground">
             {t("app.adminSuite")}
