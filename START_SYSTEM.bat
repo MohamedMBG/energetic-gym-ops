@@ -35,7 +35,7 @@ if errorlevel 1 (
 REM --- Create settings file on first run ---
 if not exist ".env" (
   copy ".env.example" ".env" >nul
-  echo [i] Created your settings file (.env).
+  echo [i] Created your settings file: .env
 )
 
 echo [i] Preparing the system. The FIRST time can take a few minutes.

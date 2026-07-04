@@ -8,7 +8,7 @@ type BusinessLogoProps = {
 
 export function BusinessLogo({ className, imageClassName }: BusinessLogoProps) {
   return (
-    <div className={cn("flex items-center justify-center overflow-hidden rounded-xl bg-black shadow-glow", className)}>
+    <div className={cn("flex items-center justify-center overflow-hidden rounded-xl bg-black p-1.5 shadow-glow ring-1 ring-white/10", className)}>
       <img
         src={logoUrl}
         alt="Seven Gym logo"
