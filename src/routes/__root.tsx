@@ -12,6 +12,7 @@ import appCss from "../styles.css?url";
 import { AppLayout } from "@/components/AppLayout";
 import { Toaster } from "@/components/ui/sonner";
 import { I18nProvider, useI18n } from "@/lib/i18n";
+import { ThemeProvider, THEME_INIT_SCRIPT } from "@/lib/theme";
 import logoUrl from "@/assets/business-logo.png";
 
 function NotFoundComponent() {
@@ -106,8 +107,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <HeadContent />
       </head>
       <body>
@@ -123,12 +125,14 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <I18nProvider>
-        <AppLayout>
-          <Outlet />
-        </AppLayout>
-        <Toaster richColors position="top-right" />
-      </I18nProvider>
+      <ThemeProvider>
+        <I18nProvider>
+          <AppLayout>
+            <Outlet />
+          </AppLayout>
+          <Toaster richColors position="top-right" />
+        </I18nProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

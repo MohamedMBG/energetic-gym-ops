@@ -16,6 +16,7 @@ const dictionary: Dictionary = {
     fr: "Envoyez des rappels 7 jours avant le renouvellement pour améliorer la fidélisation.",
   },
   "app.signOut": { en: "Sign out", fr: "Déconnexion" },
+  "app.toggleTheme": { en: "Toggle theme", fr: "Changer de thème" },
   "language.english": { en: "English", fr: "Anglais" },
   "language.french": { en: "French", fr: "Français" },
   "nav.dashboard": { en: "Dashboard", fr: "Tableau de bord" },
