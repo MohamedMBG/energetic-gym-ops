@@ -216,7 +216,7 @@ function StaffTab() {
                           onClick={() => updateStaff.mutate({ id: member.id, data: { active: !member.active } })}
                           title={member.active ? t("staff.deactivate") : t("staff.activate")}
                         >
-                          <Power className={member.active ? "h-4 w-4 text-amber-600" : "h-4 w-4 text-emerald-600"} />
+                          <Power className={member.active ? "h-4 w-4 text-amber-600 dark:text-amber-400" : "h-4 w-4 text-emerald-600 dark:text-emerald-400"} />
                         </Button>
                         <Button variant="ghost" size="icon" onClick={() => setDeleteId(member.id)}><Trash2 className="h-4 w-4 text-rose-600" /></Button>
                       </>

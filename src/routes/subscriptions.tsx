@@ -18,13 +18,13 @@ export const Route = createFileRoute("/subscriptions")({
 });
 
 function subscriptionFlagClass(status: ReturnType<typeof clientStatus>) {
-  if (status === "Expired" || status === "Unpaid") return "border-l-4 border-l-rose-500 bg-rose-50/70";
-  if (status === "Expiring soon") return "border-l-4 border-l-amber-400 bg-amber-50/70";
-  return "border-l-4 border-l-emerald-500 bg-emerald-50/60";
+  if (status === "Expired" || status === "Unpaid") return "border-l-4 border-l-rose-500 bg-rose-50/70 dark:bg-rose-500/10";
+  if (status === "Expiring soon") return "border-l-4 border-l-amber-400 bg-amber-50/70 dark:bg-amber-500/10";
+  return "border-l-4 border-l-emerald-500 bg-emerald-50/60 dark:bg-emerald-500/10";
 }
 
 function assuranceFlagClass(status: ReturnType<typeof assuranceStatus>) {
-  if (status === "Expired" || status === "Unpaid" || status === "Expiring soon") return "border-l-4 border-l-rose-500 bg-rose-50/70";
+  if (status === "Expired" || status === "Unpaid" || status === "Expiring soon") return "border-l-4 border-l-rose-500 bg-rose-50/70 dark:bg-rose-500/10";
   return "";
 }
 
@@ -108,7 +108,7 @@ function SubscriptionsPage() {
                     <TableCell className="hidden lg:table-cell">{new Date(c.subscriptionStart).toLocaleDateString()}</TableCell>
                     <TableCell className="hidden md:table-cell">{new Date(c.subscriptionEnd).toLocaleDateString()}</TableCell>
                     <TableCell>
-                      <span className={days < 0 ? "text-rose-600 font-semibold" : days <= 5 ? "text-amber-700 font-semibold" : "text-emerald-700 font-semibold"}>
+                      <span className={days < 0 ? "text-rose-600 font-semibold dark:text-rose-400" : days <= 5 ? "text-amber-700 font-semibold dark:text-amber-400" : "text-emerald-700 font-semibold dark:text-emerald-400"}>
                         {t(days < 0 ? "subscriptions.overdue" : "subscriptions.days").replace("{days}", String(days < 0 ? Math.abs(days) : days))}
                       </span>
                     </TableCell>

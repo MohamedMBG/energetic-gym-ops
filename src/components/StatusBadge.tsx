@@ -18,20 +18,20 @@ type Status =
   | "Out of service";
 
 const styles: Record<Status, string> = {
-  Active: "bg-emerald-100 text-emerald-700",
-  "Expiring soon": "bg-amber-100 text-amber-800",
-  Expired: "bg-rose-100 text-rose-700",
-  Unpaid: "bg-rose-100 text-rose-700",
-  Paid: "bg-emerald-100 text-emerald-700",
-  Late: "bg-amber-100 text-amber-800",
-  Monthly: "bg-orange-100 text-orange-700",
-  Annual: "bg-yellow-100 text-yellow-800",
-  Paused: "bg-amber-100 text-amber-800",
-  Ended: "bg-slate-100 text-slate-700",
-  Archived: "bg-slate-100 text-slate-700",
-  Operational: "bg-emerald-100 text-emerald-700",
-  Maintenance: "bg-amber-100 text-amber-800",
-  "Out of service": "bg-rose-100 text-rose-700",
+  Active: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400",
+  "Expiring soon": "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-400",
+  Expired: "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-400",
+  Unpaid: "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-400",
+  Paid: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400",
+  Late: "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-400",
+  Monthly: "bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-400",
+  Annual: "bg-yellow-100 text-yellow-800 dark:bg-yellow-500/15 dark:text-yellow-400",
+  Paused: "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-400",
+  Ended: "bg-slate-100 text-slate-700 dark:bg-slate-500/15 dark:text-slate-400",
+  Archived: "bg-slate-100 text-slate-700 dark:bg-slate-500/15 dark:text-slate-400",
+  Operational: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400",
+  Maintenance: "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-400",
+  "Out of service": "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-400",
 };
 
 export function StatusBadge({ status }: { status: Status | string }) {

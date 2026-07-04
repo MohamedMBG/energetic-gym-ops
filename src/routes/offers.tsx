@@ -206,7 +206,7 @@ function OffersPage() {
                   </TableCell>
                   <TableCell className="font-semibold">{formatCurrency(revenue, currency)}</TableCell>
                   <TableCell className="hidden md:table-cell">
-                    <span className={health === "Going well" ? "font-semibold text-emerald-700" : health === "Needs push" ? "font-semibold text-amber-700" : "font-semibold text-rose-700"}>
+                    <span className={health === "Going well" ? "font-semibold text-emerald-700 dark:text-emerald-400" : health === "Needs push" ? "font-semibold text-amber-700 dark:text-amber-400" : "font-semibold text-rose-700 dark:text-rose-400"}>
                       {t(`health.${health}`)}
                     </span>
                   </TableCell>

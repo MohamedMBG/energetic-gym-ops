@@ -209,7 +209,7 @@ function Dashboard() {
             <h2 className="text-lg font-bold">{t("dashboard.offerAnalytics")}</h2>
             <p className="text-xs text-muted-foreground">{t("dashboard.offerAnalyticsDescription")}</p>
           </div>
-          <div className="rounded-xl bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700">
+          <div className="rounded-xl bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400">
             {formatCurrency(offerRevenue, currency)} {t("dashboard.trackedOfferRevenue")}
           </div>
         </div>
@@ -241,7 +241,7 @@ function Dashboard() {
                     </div>
                   </TableCell>
                   <TableCell className="hidden sm:table-cell">
-                    <span className={health === "Going well" ? "font-semibold text-emerald-700" : health === "Needs push" ? "font-semibold text-amber-700" : "font-semibold text-rose-700"}>
+                    <span className={health === "Going well" ? "font-semibold text-emerald-700 dark:text-emerald-400" : health === "Needs push" ? "font-semibold text-amber-700 dark:text-amber-400" : "font-semibold text-rose-700 dark:text-rose-400"}>
                       {t(`health.${health}`)}
                     </span>
                   </TableCell>
