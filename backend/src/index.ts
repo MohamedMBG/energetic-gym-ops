@@ -15,6 +15,7 @@ import packRoutes from './routes/packs';
 import equipmentRoutes from './routes/equipment';
 import staffRoutes from './routes/staff';
 import healthRoutes from './routes/health';
+import { requireLicense } from './middleware/license';
 import { ensureAdminAccount } from './lib/admin-bootstrap';
 
 const app = express();
@@ -74,6 +75,10 @@ if (process.env.NODE_ENV !== 'production') {
 
 app.use('/health', healthRoutes);
 app.use('/api/health', healthRoutes);
+
+// License gate — applies to every /api route below (health above stays open).
+app.use('/api', requireLicense);
+
 app.use('/api/auth', authRoutes);
 app.use('/api/clients', clientRoutes);
 app.use('/api/payments', paymentRoutes);

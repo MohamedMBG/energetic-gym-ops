@@ -32,3 +32,7 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+# License signing — private key is VENDOR-ONLY, never commit or ship it.
+backend/license-private.pem
+backend/license.key

@@ -41,6 +41,25 @@ function getAuthToken(): string | null {
   return window.localStorage.getItem(AUTH_TOKEN_KEY);
 }
 
+// Full-screen lock shown when the backend reports an expired/missing license
+// (HTTP 402). Injected once, directly into the DOM, so it covers the app
+// regardless of which route or query triggered it.
+function showLicenseLock(message: string): void {
+  if (typeof document === 'undefined' || document.getElementById('license-lock')) return;
+  const el = document.createElement('div');
+  el.id = 'license-lock';
+  el.setAttribute(
+    'style',
+    'position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;' +
+      'background:#0b0b0f;color:#fafafa;font-family:system-ui,sans-serif;text-align:center;padding:24px;',
+  );
+  el.innerHTML =
+    '<div style="max-width:420px"><div style="font-size:40px;margin-bottom:16px">🔒</div>' +
+    '<h1 style="font-size:20px;font-weight:600;margin-bottom:8px">Software License Expired</h1>' +
+    `<p style="opacity:.7;line-height:1.5">${message}</p></div>`;
+  document.body.appendChild(el);
+}
+
 export class ApiError extends Error {
   constructor(
     public readonly status: number,
@@ -80,6 +99,11 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 
   if (!res.ok) {
     if (res.status === 401) clearAuthToken();
+
+    if (res.status === 402) {
+      const msg = (json as { error?: { message?: string } } | null)?.error?.message;
+      showLicenseLock(msg ?? 'This software license has expired.');
+    }
 
     const message =
       (json as { error?: { message?: string } } | null)?.error?.message ??
