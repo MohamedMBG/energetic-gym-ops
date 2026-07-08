@@ -16,6 +16,7 @@ import equipmentRoutes from './routes/equipment';
 import staffRoutes from './routes/staff';
 import healthRoutes from './routes/health';
 import { requireLicense } from './middleware/license';
+import { machineId } from './lib/machine';
 import { ensureAdminAccount } from './lib/admin-bootstrap';
 
 const app = express();
@@ -76,6 +77,11 @@ if (process.env.NODE_ENV !== 'production') {
 app.use('/health', healthRoutes);
 app.use('/api/health', healthRoutes);
 
+// Ungated: lets the client read their machine id to send you for a bound license.
+app.get('/machine-id', (_req, res) => {
+  res.json({ machineId: machineId() });
+});
+
 // License gate — applies to every /api route below (health above stays open).
 app.use('/api', requireLicense);
 
@@ -104,6 +110,7 @@ async function start() {
 
   app.listen(PORT, () => {
     console.log(`Backend running on http://localhost:${PORT}`);
+    console.log(`Machine ID: ${machineId()}`);
   });
 }
 
