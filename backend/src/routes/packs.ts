@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { and, eq } from 'drizzle-orm';
-import { db } from '../db';
+import { db, withTransaction } from '../db';
 import { clients, gyms, subscriptionPlans } from '../db/schema';
 import { requireAuth, requirePermission } from '../middleware/auth';
 import { validateBody } from '../middleware/validate';
@@ -182,13 +182,13 @@ router.put('/:id', validateBody(updatePackSchema), async (req, res) => {
 router.delete('/:id', async (req, res) => {
   let deleted: { id: string } | undefined;
 
-  await db.transaction(async (tx) => {
-    await tx
+  await withTransaction(async () => {
+    await db
       .update(clients)
       .set({ subscriptionPlanId: null, updatedAt: new Date() })
       .where(and(eq(clients.subscriptionPlanId, req.params.id), eq(clients.gymId, req.user.gymId)));
 
-    [deleted] = await tx
+    [deleted] = await db
       .delete(subscriptionPlans)
       .where(and(eq(subscriptionPlans.id, req.params.id), eq(subscriptionPlans.gymId, req.user.gymId)))
       .returning({ id: subscriptionPlans.id });

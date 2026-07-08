@@ -1,16 +1,12 @@
 import { defineConfig } from 'drizzle-kit';
-import * as dotenv from 'dotenv';
-dotenv.config();
 
-if (!process.env.DATABASE_URL) {
-  throw new Error('DATABASE_URL is not set in .env');
-}
-
+// SQLite. Used only at dev/build time (drizzle-kit generate/push via
+// better-sqlite3). The runtime uses the built-in node:sqlite driver instead.
 export default defineConfig({
   schema: './src/db/schema.ts',
   out: './src/db/migrations',
-  dialect: 'postgresql',
+  dialect: 'sqlite',
   dbCredentials: {
-    url: process.env.DATABASE_URL,
+    url: process.env.DB_FILE || 'gym.db',
   },
 });

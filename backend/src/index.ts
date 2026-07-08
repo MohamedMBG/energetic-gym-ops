@@ -1,6 +1,8 @@
 import 'dotenv/config';
 import 'express-async-errors';
 
+import path from 'node:path';
+import fs from 'node:fs';
 import express, { Request, Response, NextFunction } from 'express';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
@@ -17,6 +19,7 @@ import staffRoutes from './routes/staff';
 import healthRoutes from './routes/health';
 import { requireLicense } from './middleware/license';
 import { machineId } from './lib/machine';
+import { startBackups } from './lib/backup';
 import { ensureAdminAccount } from './lib/admin-bootstrap';
 
 const app = express();
@@ -28,7 +31,15 @@ function parseAllowedOrigins() {
     .map((origin) => origin.trim())
     .filter(Boolean);
 
-  return new Set([...configured, 'http://localhost:3000', 'http://localhost:5173']);
+  return new Set([
+    ...configured,
+    'http://localhost:3000',
+    'http://localhost:5173',
+    // Frontend is served by this same process (single exe), so its own origin
+    // must be allowed for same-origin API calls.
+    `http://localhost:${PORT}`,
+    `http://127.0.0.1:${PORT}`,
+  ]);
 }
 
 const allowedOrigins = parseAllowedOrigins();
@@ -94,6 +105,19 @@ app.use('/api/packs', packRoutes);
 app.use('/api/equipment', equipmentRoutes);
 app.use('/api/staff', staffRoutes);
 
+// Serve the built frontend (SPA) from ./public next to the exe, if present.
+// Same origin as the API, so the exe is one process on one port. Skipped in dev
+// (frontend runs on its own vite server). SPA shell is _shell.html — any
+// non-API, non-asset GET falls back to it so client-side routing works.
+const PUBLIC_DIR = process.env.PUBLIC_DIR || path.join(process.cwd(), 'public');
+const SPA_SHELL = path.join(PUBLIC_DIR, '_shell.html');
+if (fs.existsSync(SPA_SHELL)) {
+  app.use(express.static(PUBLIC_DIR));
+  app.get(/^(?!\/api|\/health|\/machine-id).*/, (_req, res) => {
+    res.sendFile(SPA_SHELL);
+  });
+}
+
 // Global error handler — handles AppError (typed HTTP errors) and unexpected crashes.
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
@@ -107,9 +131,11 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
 
 async function start() {
   await ensureAdminAccount();
+  startBackups();
 
   app.listen(PORT, () => {
-    console.log(`Backend running on http://localhost:${PORT}`);
+    const ui = fs.existsSync(SPA_SHELL) ? ' (open this in a browser)' : '';
+    console.log(`Seven Up Gym running on http://localhost:${PORT}${ui}`);
     console.log(`Machine ID: ${machineId()}`);
   });
 }

@@ -10,16 +10,28 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
+    "db:embed": "node -e \"const fs=require('fs');const f=fs.readdirSync('src/db/migrations').filter(x=>x.endsWith('.sql')).sort().pop();const sql=fs.readFileSync('src/db/migrations/'+f,'utf8').split('--> statement-breakpoint').join('\\n');fs.writeFileSync('src/db/schema-sql.ts','// AUTO-GENERATED from drizzle-kit. Regenerate: npm run db:generate then npm run db:embed.\\nexport const SCHEMA_SQL = '+JSON.stringify(sql)+';\\n')\"",
     "bundle": "esbuild src/index.ts --bundle --platform=node --target=node22 --format=cjs --outfile=dist/bundle.cjs",
     "package": "npm run bundle && pkg dist/bundle.cjs --targets node22-win-x64 --output dist/seven-backend.exe"
   },
   "bin": "dist/bundle.cjs",
   "pkg": {
-    "targets": ["node22-win-x64"],
+    "targets": [
+      "node22-win-x64"
+    ],
     "outputPath": "dist"
   },
   "dependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/cookie-parser": "^1.4.8",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.9",
+    "@types/morgan": "^1.9.9",
+    "@types/node": "^22.16.5",
     "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^12.11.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
@@ -28,14 +40,6 @@
     "express-async-errors": "^3.1.1",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
-    "postgres": "^3.4.7",
-    "@types/bcryptjs": "^2.4.6",
-    "@types/cookie-parser": "^1.4.8",
-    "@types/cors": "^2.8.17",
-    "@types/express": "^4.17.21",
-    "@types/jsonwebtoken": "^9.0.9",
-    "@types/morgan": "^1.9.9",
-    "@types/node": "^22.16.5",
     "typescript": "^5.8.3",
     "zod": "^3.24.2"
   },

@@ -1,16 +1,20 @@
-import { pgTable, text, real, integer, timestamp, index } from 'drizzle-orm/pg-core';
+import { sqliteTable, text, real, integer, index } from 'drizzle-orm/sqlite-core';
 
-export const gyms = pgTable('gyms', {
+// SQLite schema. Timestamps stored as unix integers (mode: 'timestamp' <-> Date).
+// permissions stored as JSON text (SQLite has no array type).
+const now = () => new Date();
+
+export const gyms = sqliteTable('gyms', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
   monthlyPrice: real('monthly_price').notNull().default(45),
   annualPrice: real('annual_price').notNull().default(480),
   reminderDays: integer('reminder_days').notNull().default(7),
   currency: text('currency').notNull().default('MAD'),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(now),
 });
 
-export const roles = pgTable(
+export const roles = sqliteTable(
   'roles',
   {
     id: text('id').primaryKey(),
@@ -18,14 +22,14 @@ export const roles = pgTable(
       .notNull()
       .references(() => gyms.id),
     name: text('name').notNull(),
-    permissions: text('permissions').array().notNull().default([]),
-    createdAt: timestamp('created_at').notNull().defaultNow(),
-    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    permissions: text('permissions', { mode: 'json' }).$type<string[]>().notNull().$defaultFn(() => []),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(now),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().$defaultFn(now),
   },
   (table) => [index('roles_gym_id_idx').on(table.gymId)],
 );
 
-export const users = pgTable('users', {
+export const users = sqliteTable('users', {
   id: text('id').primaryKey(),
   gymId: text('gym_id')
     .notNull()
@@ -36,10 +40,10 @@ export const users = pgTable('users', {
   // null roleId = Owner: full access, cannot be deactivated/deleted via the app
   roleId: text('role_id').references(() => roles.id),
   active: integer('active').notNull().default(1),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(now),
 });
 
-export const offers = pgTable(
+export const offers = sqliteTable(
   'offers',
   {
     id: text('id').primaryKey(),
@@ -53,8 +57,8 @@ export const offers = pgTable(
     endDate: text('end_date'),
     targetSubscriptions: integer('target_subscriptions').notNull().default(0),
     status: text('status').notNull().default('Active'), // 'Active' | 'Paused' | 'Ended'
-    createdAt: timestamp('created_at').notNull().defaultNow(),
-    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(now),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().$defaultFn(now),
   },
   (table) => [
     index('offers_gym_id_idx').on(table.gymId),
@@ -62,7 +66,7 @@ export const offers = pgTable(
   ],
 );
 
-export const subscriptionPlans = pgTable(
+export const subscriptionPlans = sqliteTable(
   'subscription_plans',
   {
     id: text('id').primaryKey(),
@@ -75,8 +79,8 @@ export const subscriptionPlans = pgTable(
     description: text('description').notNull().default(''),
     status: text('status').notNull().default('Active'), // 'Active' | 'Archived'
     isDefault: integer('is_default').notNull().default(0),
-    createdAt: timestamp('created_at').notNull().defaultNow(),
-    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(now),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().$defaultFn(now),
   },
   (table) => [
     index('subscription_plans_gym_id_idx').on(table.gymId),
@@ -84,7 +88,7 @@ export const subscriptionPlans = pgTable(
   ],
 );
 
-export const equipment = pgTable(
+export const equipment = sqliteTable(
   'equipment',
   {
     id: text('id').primaryKey(),
@@ -100,8 +104,8 @@ export const equipment = pgTable(
     supplierName: text('supplier_name').notNull().default(''),
     supplierPhone: text('supplier_phone').notNull().default(''),
     notes: text('notes').notNull().default(''),
-    createdAt: timestamp('created_at').notNull().defaultNow(),
-    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(now),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().$defaultFn(now),
   },
   (table) => [
     index('equipment_gym_id_idx').on(table.gymId),
@@ -110,7 +114,7 @@ export const equipment = pgTable(
   ],
 );
 
-export const clients = pgTable(
+export const clients = sqliteTable(
   'clients',
   {
     id: text('id').primaryKey(),
@@ -139,8 +143,8 @@ export const clients = pgTable(
     amountPaid: real('amount_paid').notNull().default(0),
     notes: text('notes').notNull().default(''),
     staffId: text('staff_id').references(() => users.id), // staff member who registered/manages this client
-    createdAt: timestamp('created_at').notNull().defaultNow(),
-    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(now),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().$defaultFn(now),
   },
   (table) => [
     index('clients_gym_id_idx').on(table.gymId),
@@ -149,7 +153,7 @@ export const clients = pgTable(
   ],
 );
 
-export const payments = pgTable(
+export const payments = sqliteTable(
   'payments',
   {
     id: text('id').primaryKey(),
@@ -166,7 +170,7 @@ export const payments = pgTable(
     method: text('method').notNull(), // 'Cash' | 'Card' | 'Bank transfer'
     status: text('status').notNull(), // 'Paid' | 'Unpaid'
     staffId: text('staff_id').references(() => users.id), // staff member who collected/recorded this payment
-    createdAt: timestamp('created_at').notNull().defaultNow(),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(now),
   },
   (table) => [
     index('payments_gym_id_idx').on(table.gymId),
@@ -177,8 +181,7 @@ export const payments = pgTable(
 );
 
 // Audit trail: one row per staff action (login, logout, record created/updated/deleted).
-// Powers the staff performance view (login activity + actions taken).
-export const activityLogs = pgTable(
+export const activityLogs = sqliteTable(
   'activity_logs',
   {
     id: text('id').primaryKey(),
@@ -188,10 +191,10 @@ export const activityLogs = pgTable(
     userId: text('user_id')
       .notNull()
       .references(() => users.id),
-    action: text('action').notNull(), // 'login' | 'logout' | 'client_created' | 'payment_recorded' | ...
+    action: text('action').notNull(), // 'login' | 'logout' | 'client_created' | ...
     entityType: text('entity_type'),
     entityId: text('entity_id'),
-    createdAt: timestamp('created_at').notNull().defaultNow(),
+    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(now),
   },
   (table) => [
     index('activity_logs_gym_id_idx').on(table.gymId),
@@ -200,7 +203,7 @@ export const activityLogs = pgTable(
   ],
 );
 
-export const reminderLogs = pgTable('reminder_logs', {
+export const reminderLogs = sqliteTable('reminder_logs', {
   id: text('id').primaryKey(),
   gymId: text('gym_id')
     .notNull()

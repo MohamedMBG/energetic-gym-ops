@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { eq, and, ilike } from 'drizzle-orm';
+import { eq, and, like } from 'drizzle-orm';
 import { db } from '../db';
 import { clients } from '../db/schema';
 import { requireAuth, requirePermission } from '../middleware/auth';
@@ -52,7 +52,7 @@ router.get('/', async (req, res) => {
     .from(clients)
     .where(
       search
-        ? and(eq(clients.gymId, gymId), ilike(clients.fullName, `%${search}%`))
+        ? and(eq(clients.gymId, gymId), like(clients.fullName, `%${search}%`))
         : eq(clients.gymId, gymId),
     )
     .orderBy(clients.createdAt);

@@ -36,3 +36,6 @@ dist-ssr
 # License signing — private key is VENDOR-ONLY, never commit or ship it.
 backend/license-private.pem
 backend/license.key
+
+# Client delivery build output
+deliverable/

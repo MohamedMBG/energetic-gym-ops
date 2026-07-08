@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { eq, and } from 'drizzle-orm';
-import { db } from '../db';
+import { db, withTransaction } from '../db';
 import { payments, clients } from '../db/schema';
 import { requireAuth, requirePermission } from '../middleware/auth';
 import { validateBody } from '../middleware/validate';
@@ -51,8 +51,8 @@ router.post('/', validateBody(createPaymentSchema), async (req, res) => {
 
   let createdPayment: typeof payments.$inferSelect | undefined;
 
-  await db.transaction(async (tx) => {
-    const [client] = await tx
+  await withTransaction(async () => {
+    const [client] = await db
       .select({ id: clients.id })
       .from(clients)
       .where(and(eq(clients.id, data.clientId), eq(clients.gymId, gymId)));
@@ -61,13 +61,13 @@ router.post('/', validateBody(createPaymentSchema), async (req, res) => {
       throw new AppError(404, 'Client not found');
     }
 
-    [createdPayment] = await tx
+    [createdPayment] = await db
       .insert(payments)
       .values({ id: crypto.randomUUID(), gymId, staffId: req.user.userId, ...data })
       .returning();
 
     if (data.status === 'Paid') {
-      await tx
+      await db
         .update(clients)
         .set({
           paymentStatus: 'Paid',

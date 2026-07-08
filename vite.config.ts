@@ -8,13 +8,22 @@ import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 import { nitro } from "nitro/vite";
 
 const isVercel = process.env.VERCEL === "1";
+// LOCAL_BUILD: offline single-machine delivery. Build a Node server (nitro,
+// like Vercel) instead of the Cloudflare worker, and turn on SPA mode so the
+// build prerenders a static index.html we can serve from the backend exe.
+const isLocal = process.env.LOCAL_BUILD === "1";
+const nodeServer = isVercel || isLocal;
 
 // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
 // @cloudflare/vite-plugin builds from this — wrangler.jsonc main alone is insufficient.
 export default defineConfig({
-  cloudflare: isVercel ? false : undefined,
-  plugins: isVercel ? [nitro()] : [],
+  cloudflare: nodeServer ? false : undefined,
+  plugins: nodeServer ? [nitro()] : [],
   tanstackStart: {
     server: { entry: "server" },
+    // SPA mode only for the local offline build: prerender a static index.html
+    // shell so the app serves as plain static files from the backend exe. Cloud
+    // deploys keep full SSR.
+    spa: isLocal ? { enabled: true } : undefined,
   },
 });
