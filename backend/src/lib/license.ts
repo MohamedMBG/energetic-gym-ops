@@ -14,8 +14,14 @@ import path from 'node:path';
 // demo window). On or after it, a valid non-expired license file is required.
 const GRACE_UNTIL = '2026-07-30';
 
-const PUBLIC_KEY_PATH = path.join(__dirname, '..', '..', 'license-public.pem');
-const LICENSE_PATH = process.env.LICENSE_FILE || path.join(__dirname, '..', '..', 'license.key');
+// Resolve from cwd, not __dirname: npm runs both `dev` (tsx, src/) and `start`
+// (node dist/) with cwd = the backend package dir, so this is stable across dev
+// and the production build. __dirname would point into dist/ after tsc.
+const PUBLIC_KEY_PATH = path.join(process.cwd(), 'license-public.pem');
+const LICENSE_PATH = process.env.LICENSE_FILE || path.join(process.cwd(), 'license.key');
+
+// Public key ships with the app and never changes — read it once.
+const publicKey = fs.readFileSync(PUBLIC_KEY_PATH, 'utf8');
 
 interface LicenseFile {
   expires: string; // YYYY-MM-DD
@@ -52,13 +58,23 @@ export function checkLicense(): LicenseStatus {
     return { ok: false, reason: 'License file is corrupt.' };
   }
 
-  const publicKey = fs.readFileSync(PUBLIC_KEY_PATH, 'utf8');
-  const verified = crypto.verify(
-    'sha256',
-    Buffer.from(lic.expires, 'utf8'),
-    publicKey,
-    Buffer.from(lic.signature, 'base64'),
-  );
+  if (typeof lic.expires !== 'string' || typeof lic.signature !== 'string') {
+    return { ok: false, reason: 'License file is malformed.' };
+  }
+
+  // Fail closed: any verify error (bad key, garbage signature) = not licensed,
+  // never a 500.
+  let verified = false;
+  try {
+    verified = crypto.verify(
+      'sha256',
+      Buffer.from(lic.expires, 'utf8'),
+      publicKey,
+      Buffer.from(lic.signature, 'base64'),
+    );
+  } catch {
+    verified = false;
+  }
   if (!verified) return { ok: false, reason: 'License signature invalid.' };
 
   if (today > lic.expires) {

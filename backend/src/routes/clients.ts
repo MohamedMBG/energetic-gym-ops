@@ -17,6 +17,7 @@ const createClientSchema = z.object({
   fullName: z.string().min(2).max(100),
   phone: z.string().min(5).max(30),
   email: z.string().email(),
+  photoUrl: z.string().max(1_500_000).default(''), // data URL; downscaled client-side
   gender: z.enum(['Male', 'Female']),
   joinDate: isoDate,
   trainingAccess: z.enum(['Martial Arts', 'Gym & Bodybuilding', 'Both']).default('Gym & Bodybuilding'),

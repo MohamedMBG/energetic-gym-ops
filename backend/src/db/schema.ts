@@ -120,6 +120,7 @@ export const clients = pgTable(
     fullName: text('full_name').notNull(),
     phone: text('phone').notNull(),
     email: text('email').notNull(),
+    photoUrl: text('photo_url').notNull().default(''), // downscaled JPEG data URL, '' = none
     gender: text('gender').notNull(), // 'Male' | 'Female'
     joinDate: text('join_date').notNull(), // ISO date string
     trainingAccess: text('training_access').notNull().default('Gym & Bodybuilding'), // 'Martial Arts' | 'Gym & Bodybuilding' | 'Both'

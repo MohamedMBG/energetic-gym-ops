@@ -47,6 +47,7 @@ export interface Client {
   fullName: string;
   phone: string;
   email: string;
+  photoUrl: string; // downscaled JPEG data URL, '' = none
   gender: Gender;
   joinDate: string; // ISO date
   trainingAccess: TrainingAccess;

@@ -133,6 +133,8 @@ const dictionary: Dictionary = {
   "clients.amountPaid": { en: "Amount paid", fr: "Montant payé" },
   "clients.paymentMethod": { en: "Payment method", fr: "Méthode de paiement" },
   "clients.notes": { en: "Notes", fr: "Notes" },
+  "clients.photo": { en: "Photo", fr: "Photo" },
+  "clients.removePhoto": { en: "Remove", fr: "Retirer" },
   "clients.deleteTitle": { en: "Delete this client?", fr: "Supprimer ce client ?" },
   "clients.deleteDescription": { en: "This will permanently remove the client. This action cannot be undone.", fr: "Cela supprimera définitivement le client. Cette action est irréversible." },
   "clients.added": { en: "Client added", fr: "Client ajouté" },

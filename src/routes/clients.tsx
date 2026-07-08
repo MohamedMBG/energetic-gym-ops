@@ -32,6 +32,7 @@ const schema = z.object({
   fullName: z.string().trim().min(2, "Full name is required").max(100),
   phone: z.string().trim().min(5, "Phone is required").max(30),
   email: z.string().trim().email("Invalid email").max(120),
+  photoUrl: z.string().max(1_500_000).default(""),
   gender: z.enum(["Male", "Female"]),
   joinDate: z.string().min(1),
   trainingAccess: z.enum(["Martial Arts", "Gym & Bodybuilding", "Both"]),
@@ -57,6 +58,7 @@ const empty = (): FormState => ({
   fullName: "",
   phone: "",
   email: "",
+  photoUrl: "",
   gender: "Male",
   joinDate: new Date().toISOString().slice(0, 10),
   trainingAccess: "Gym & Bodybuilding",
@@ -83,6 +85,33 @@ function subscriptionFlagClass(status: ReturnType<typeof clientStatus>) {
 function assuranceFlagClass(status: ReturnType<typeof assuranceStatus>) {
   if (status === "Expired" || status === "Unpaid" || status === "Expiring soon") return "border-l-4 border-l-rose-500 bg-rose-50/70 dark:bg-rose-500/10";
   return "";
+}
+
+// Read an image file and downscale it to a small avatar so we store a compact
+// JPEG data URL (a few tens of KB) instead of a multi-MB raw photo in the DB.
+function readImageDownscaled(file: File, max = 400): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Could not read file"));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("Invalid image"));
+      img.onload = () => {
+        const scale = Math.min(1, max / Math.max(img.width, img.height));
+        const w = Math.round(img.width * scale);
+        const h = Math.round(img.height * scale);
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return reject(new Error("Canvas unsupported"));
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL("image/jpeg", 0.8));
+      };
+      img.src = reader.result as string;
+    };
+    reader.readAsDataURL(file);
+  });
 }
 
 function inferTrainingAccess(packName: string): Client["trainingAccess"] | null {
@@ -149,6 +178,7 @@ function ClientsPage() {
       fullName: c.fullName,
       phone: c.phone,
       email: c.email,
+      photoUrl: c.photoUrl ?? "",
       gender: c.gender,
       joinDate: c.joinDate,
       trainingAccess: c.trainingAccess ?? "Gym & Bodybuilding",
@@ -293,9 +323,13 @@ function ClientsPage() {
                   <TableRow key={c.id} className={cn("transition-colors hover:bg-muted/50", subscriptionFlagClass(status), assuranceFlagClass(assStatus))}>
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-brand text-xs font-bold text-white">
-                          {c.fullName.split(" ").map((n) => n[0]).slice(0, 2).join("")}
-                        </div>
+                        {c.photoUrl ? (
+                          <img src={c.photoUrl} alt="" className="h-9 w-9 rounded-full object-cover" />
+                        ) : (
+                          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-brand text-xs font-bold text-white">
+                            {c.fullName.split(" ").map((n) => n[0]).slice(0, 2).join("")}
+                          </div>
+                        )}
                         <div>
                           <div className="font-semibold">{c.fullName}</div>
                           <div className="text-xs text-muted-foreground">{t(c.gender === "Female" ? "clients.female" : "clients.male")} - {t("clients.joinDate")} {new Date(c.joinDate).toLocaleDateString()}</div>
@@ -354,6 +388,42 @@ function ClientsPage() {
           </DialogHeader>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <Field label={t("clients.photo")} error={errors.photoUrl}>
+                <div className="flex items-center gap-4">
+                  {form.photoUrl ? (
+                    <img src={form.photoUrl} alt="" className="h-16 w-16 rounded-full object-cover" />
+                  ) : (
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted text-lg font-bold text-muted-foreground">
+                      {form.fullName.split(" ").map((n) => n[0]).slice(0, 2).join("") || "?"}
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      className="max-w-xs"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        try {
+                          const dataUrl = await readImageDownscaled(file);
+                          setForm((f) => ({ ...f, photoUrl: dataUrl }));
+                        } catch {
+                          toast.error("Could not read that image");
+                        }
+                        e.target.value = "";
+                      }}
+                    />
+                    {form.photoUrl && (
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setForm((f) => ({ ...f, photoUrl: "" }))}>
+                        {t("clients.removePhoto")}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </Field>
+            </div>
             <Field label={t("clients.fullName")} error={errors.fullName}>
               <Input value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} />
             </Field>
