@@ -11,10 +11,6 @@ import { machineId } from './machine';
 // license files with scripts/make-license.mjs; the app ships only the public
 // key, so the license cannot be forged on the client's machine.
 
-// Until this date the app runs even with no license file present (delivery /
-// demo window). On or after it, a valid non-expired license file is required.
-const GRACE_UNTIL = '2026-07-30';
-
 // Resolve from cwd, not __dirname: npm runs both `dev` (tsx, src/) and `start`
 // (node dist/) with cwd = the backend package dir, so this is stable across dev
 // and the production build. __dirname would point into dist/ after tsc.
@@ -44,6 +40,7 @@ export interface LicenseStatus {
   ok: boolean;
   reason?: string;
   expires?: string;
+  noLicense?: boolean; // true = no license file at all (trial may still apply)
 }
 
 export function checkLicense(): LicenseStatus {
@@ -53,9 +50,8 @@ export function checkLicense(): LicenseStatus {
   try {
     raw = fs.readFileSync(LICENSE_PATH, 'utf8');
   } catch {
-    // No license file. Allowed only inside the grace window.
-    if (today < GRACE_UNTIL) return { ok: true, reason: 'grace' };
-    return { ok: false, reason: 'No license file installed. Contact the vendor.' };
+    // No license file installed yet — caller decides whether the free trial applies.
+    return { ok: false, noLicense: true, reason: 'No license installed.' };
   }
 
   let lic: LicenseFile;

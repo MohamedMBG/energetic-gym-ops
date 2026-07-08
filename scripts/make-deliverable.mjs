@@ -51,7 +51,7 @@ fs.writeFileSync(
   [
     '@echo off',
     'cd /d "%~dp0"',
-    'start "" /b cmd /c "timeout /t 3 >nul & start \\"\\" http://localhost:3001"',
+    'start "" /b cmd /c "timeout /t 3 >nul & start http://localhost:3001"',
     'seven-backend.exe',
     'pause',
     '',
@@ -90,6 +90,7 @@ console.log('=== RECORD THESE — the client logs in with them ===');
 console.log(`  Login email:    ${adminEmail}`);
 console.log(`  Login password: ${adminPassword}`);
 console.log('===================================================\n');
-console.log('Reminder: the app runs freely until the grace date, then needs a license.key.');
-console.log('To bind a paid license to their machine, get their Machine ID (shown in the');
-console.log('console / at /machine-id) and run: node scripts/make-license.mjs <date> --machine <id>\n');
+console.log('Reminder: the app runs FREE for 2 hours from first launch, then locks until a');
+console.log('license.key is installed. To bind a paid license to their machine, get their');
+console.log('Machine ID (console / http://localhost:3001/machine-id) and run:');
+console.log('  node scripts/make-license.mjs <expiry-date> --machine <id>\n');

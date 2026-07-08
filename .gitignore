@@ -37,5 +37,9 @@ dist-ssr
 backend/license-private.pem
 backend/license.key
 
+# Local SQLite runtime data
+backend/gym.db*
+backend/backups/
+
 # Client delivery build output
 deliverable/
