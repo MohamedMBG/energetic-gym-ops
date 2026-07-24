@@ -1,0 +1,81 @@
+name: Build macOS deliverable
+
+# Builds the Mac client bundle on a REAL macOS runner and smoke-tests the binary
+# before handing it back — this is what closes the two things a Windows box can't
+# verify: (1) node:sqlite actually opens the DB inside the pkg binary, (2) the
+# server boots. Run it from the Actions tab (Run workflow), download the artifact.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-14 # Apple Silicon (arm64)
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install root deps
+        run: npm ci
+
+      - name: Install backend deps
+        run: npm ci
+        working-directory: backend
+
+      - name: Build macOS deliverable
+        run: npm run make:deliverable:mac
+
+      # The real test: the binary crashes at startup if node:sqlite can't open the
+      # DB (db/index.ts runs at import). If /health answers, the DB opened and the
+      # server booted. /health is ungated (no license needed).
+      - name: Smoke test — arm64 (must pass)
+        working-directory: deliverable
+        run: |
+          codesign --force --sign - ./seven-backend-arm64
+          ./seven-backend-arm64 &
+          PID=$!
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:3001/health >/dev/null; then
+              echo "OK: arm64 booted, DB opened"
+              kill $PID 2>/dev/null || true
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "FAIL: arm64 server never answered /health"
+          kill $PID 2>/dev/null || true
+          exit 1
+
+      # Best-effort: runs the x64 binary through Rosetta 2 (present on GH runners).
+      # Non-blocking — a Rosetta quirk here shouldn't fail the arm64 deliverable.
+      - name: Smoke test — x64 via Rosetta (best-effort)
+        working-directory: deliverable
+        continue-on-error: true
+        run: |
+          codesign --force --sign - ./seven-backend-x64
+          PORT=3002 arch -x86_64 ./seven-backend-x64 &
+          PID=$!
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:3002/health >/dev/null; then
+              echo "OK: x64 booted, DB opened"
+              kill $PID 2>/dev/null || true
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "WARN: x64 did not answer (may be a Rosetta-on-CI quirk)"
+          kill $PID 2>/dev/null || true
+          exit 1
+
+      # zip on macOS preserves the exec bit, so the client can double-click.
+      - name: Zip deliverable
+        run: cd deliverable && zip -r ../seven-gym-macos.zip .
+
+      - name: Upload deliverable
+        uses: actions/upload-artifact@v4
+        with:
+          name: seven-gym-macos
+          path: seven-gym-macos.zip

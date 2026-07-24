@@ -9,6 +9,7 @@
     "build": "vite build",
     "build:local": "node scripts/build-local.mjs",
     "make:deliverable": "node scripts/make-deliverable.mjs",
+    "make:deliverable:mac": "node scripts/make-deliverable.mjs --mac",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "setup:local": "node scripts/setup-local.mjs",

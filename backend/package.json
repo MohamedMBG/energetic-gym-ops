@@ -12,7 +12,8 @@
     "db:studio": "drizzle-kit studio",
     "db:embed": "node -e \"const fs=require('fs');const f=fs.readdirSync('src/db/migrations').filter(x=>x.endsWith('.sql')).sort().pop();const sql=fs.readFileSync('src/db/migrations/'+f,'utf8').split('--> statement-breakpoint').join('\\n');fs.writeFileSync('src/db/schema-sql.ts','// AUTO-GENERATED from drizzle-kit. Regenerate: npm run db:generate then npm run db:embed.\\nexport const SCHEMA_SQL = '+JSON.stringify(sql)+';\\n')\"",
     "bundle": "esbuild src/index.ts --bundle --platform=node --target=node22 --format=cjs --outfile=dist/bundle.cjs",
-    "package": "npm run bundle && pkg dist/bundle.cjs --targets node22-win-x64 --output dist/seven-backend.exe"
+    "package": "npm run bundle && pkg dist/bundle.cjs --targets node22-win-x64 --output dist/seven-backend.exe",
+    "package:mac": "npm run bundle && pkg dist/bundle.cjs --no-bytecode --public --targets node22-macos-arm64 --output dist/seven-backend-arm64 && pkg dist/bundle.cjs --no-bytecode --public --targets node22-macos-x64 --output dist/seven-backend-x64"
   },
   "bin": "dist/bundle.cjs",
   "pkg": {
